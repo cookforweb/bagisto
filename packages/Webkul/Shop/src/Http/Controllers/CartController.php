@@ -2,7 +2,6 @@
 
 namespace Webkul\Shop\Http\Controllers;
 
-use Illuminate\Support\Facades\Log;
 use Webkul\Customer\Repositories\WishlistRepository;
 use Webkul\Product\Repositories\ProductRepository;
 use Webkul\Checkout\Contracts\Cart as CartModel;
@@ -69,12 +68,14 @@ class CartController extends Controller
         try {
             $result = Cart::addProduct($id, request()->all());
 
-            if ($this->onFailureAddingToCart($result)) {
+            if ($this->onWarningAddingToCart($result)) {
+                session()->flash('warning', $result['warning']);
+
                 return redirect()->back();
             }
 
             if ($result instanceof CartModel) {
-                session()->flash('success', __('shop::app.checkout.cart.item.success'));
+                session()->flash('success', trans('shop::app.checkout.cart.item.success'));
 
                 if ($customer = auth()->guard('customer')->user()) {
                     $this->wishlistRepository->deleteWhere(['product_id' => $id, 'customer_id' => $customer->id]);
@@ -87,12 +88,9 @@ class CartController extends Controller
                 }
             }
         } catch(\Exception $e) {
-            session()->flash('warning', __($e->getMessage()));
+            session()->flash('error', trans($e->getMessage()));
 
             $product = $this->productRepository->find($id);
-
-            Log::error('Shop CartController: ' . $e->getMessage(),
-                ['product_id' => $id, 'cart_id' => cart()->getCart() ?? 0]);
 
             return redirect()->route('shop.productOrCategory.index', $product->url_key);
         }
@@ -207,25 +205,13 @@ class CartController extends Controller
     }
 
     /**
-     * Returns true, if result of adding product to cart
-     * is an array and contains a key "warning" or "info"
+     * Returns true, if result of adding product to cart is an array and contains a key "warning"
      *
      * @param  array  $result
-     *
      * @return boolean
      */
-    private function onFailureAddingToCart($result): bool
+    private function onWarningAddingToCart($result): bool
     {
-        if (is_array($result) && isset($result['warning'])) {
-            session()->flash('warning', $result['warning']);
-            return true;
-        }
-
-        if (is_array($result) && isset($result['info'])) {
-            session()->flash('info', $result['info']);
-            return true;
-        }
-
-        return false;
+        return is_array($result) && isset($result['warning']);
     }
 }

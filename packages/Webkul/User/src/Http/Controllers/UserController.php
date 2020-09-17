@@ -2,12 +2,12 @@
 
 namespace Webkul\User\Http\Controllers;
 
-use Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Event;
-use Webkul\User\Http\Requests\UserForm;
-use Webkul\User\Repositories\RoleRepository;
 use Webkul\User\Repositories\AdminRepository;
+use Webkul\User\Repositories\RoleRepository;
+use Webkul\User\Http\Requests\UserForm;
+use Hash;
 
 class UserController extends Controller
 {
@@ -125,14 +125,11 @@ class UserController extends Controller
      */
     public function update(UserForm $request, $id)
     {
-        $isPasswordChanged = false;
-
         $data = $request->all();
 
         if (! $data['password']) {
             unset($data['password']);
         } else {
-            $isPasswordChanged = true;
             $data['password'] = bcrypt($data['password']);
         }
 
@@ -145,10 +142,6 @@ class UserController extends Controller
         Event::dispatch('user.admin.update.before', $id);
 
         $admin = $this->adminRepository->update($data, $id);
-
-        if ($isPasswordChanged) {
-            Event::dispatch('user.admin.update-password', $admin);
-        }
 
         Event::dispatch('user.admin.update.after', $admin);
 

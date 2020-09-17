@@ -121,23 +121,4 @@ abstract class Payment
     {
         return $this->getConfigData('sort');
     }
-
-    /**
-     * Returns payment method additional information
-     *
-     * @return array
-     */
-    public function getAdditionalDetails()
-    {
-        if (! $this->getConfigData('instructions')
-            || $this->getConfigData('instructions') == ''
-        ) {
-            return [];
-        }
-
-        return [
-            'title' => trans('admin::app.admin.system.instructions'),
-            'value' => $this->getConfigData('instructions'),
-        ];
-    }
 }

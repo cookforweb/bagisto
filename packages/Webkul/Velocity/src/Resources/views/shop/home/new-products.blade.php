@@ -1,6 +1,5 @@
 @php
     $count = $velocityMetaData ? $velocityMetaData->new_products_count : 10;
-    $direction = core()->getCurrentLocale()->direction == 'rtl' ? 'rtl' : 'ltr';
 @endphp
 
 <new-products></new-products>
@@ -25,14 +24,13 @@
                             </style>
                         @endpush
 
-                        <div class="row {{ $direction }}">
+                        <div class="row ltr">
                             <div class="col-9 no-padding carousel-products vc-full-screen with-recent-viewed" v-if="!isMobileView">
                                 <carousel-component
                                     slides-per-page="5"
                                     navigation-enabled="hide"
                                     pagination-enabled="hide"
                                     id="new-products-carousel"
-                                    locale-direction="{{ $direction }}"
                                     :slides-count="newProducts.length">
 
                                     <slide
@@ -53,7 +51,6 @@
                                     navigation-enabled="hide"
                                     pagination-enabled="hide"
                                     id="new-products-carousel"
-                                    locale-direction="{{ $direction }}"
                                     :slides-count="newProducts.length">
 
                                     <slide
@@ -74,13 +71,12 @@
                             ])
                         </div>
                     @else
-                        <div class="carousel-products vc-full-screen {{ $direction }}" v-if="!isMobileView">
+                        <div class="carousel-products vc-full-screen" v-if="!isMobileView">
                             <carousel-component
                                 slides-per-page="6"
                                 navigation-enabled="hide"
                                 pagination-enabled="hide"
                                 id="new-products-carousel"
-                                locale-direction="{{ $direction }}"
                                 :slides-count="newProducts.length">
 
                                 <slide
@@ -95,13 +91,12 @@
                             </carousel-component>
                         </div>
 
-                        <div class="carousel-products vc-small-screen {{ $direction }}" v-else>
+                        <div class="carousel-products vc-small-screen" v-else>
                             <carousel-component
                                 slides-per-page="2"
                                 navigation-enabled="hide"
                                 pagination-enabled="hide"
                                 id="new-products-carousel"
-                                locale-direction="{{ $direction }}"
                                 :slides-count="newProducts.length">
 
                                 <slide
@@ -119,29 +114,6 @@
 
                 {!! view_render_event('bagisto.shop.new-products.after') !!}
             </template>
-
-            @if ($count==0)
-                <template>
-                        @if ($showRecentlyViewed)
-                            @push('css')
-                                <style>
-                                    .recently-viewed {
-                                        padding-right: 0px;
-                                    }
-                                </style>
-                            @endpush
-
-                            <div class="row {{ $direction }}">
-                                <div class="col-9 no-padding carousel-products vc-full-screen with-recent-viewed" v-if="!isMobileView"></div>
-
-                                @include ('shop::products.list.recently-viewed', [
-                                    'quantity'          => 3,
-                                    'addClass'          => 'col-lg-3 col-md-12',
-                                ])
-                            </div>
-                        @endif
-                </template>
-            @endif
         </div>
     </script>
 
@@ -166,12 +138,8 @@
                     'getNewProducts': function () {
                         this.$http.get(`${this.baseUrl}/category-details?category-slug=new-products&count={{ $count }}`)
                         .then(response => {
-                             var count = '{{$count}}';
-                            if (response.data.status && count != 0){
+                            if (response.data.status)
                                 this.newProducts = response.data.products;
-                            }else{
-                                this.newProducts = 0;
-                            }
 
                             this.isLoading = false;
                         })

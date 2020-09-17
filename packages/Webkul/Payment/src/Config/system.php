@@ -34,12 +34,6 @@ return [
                 'validation'    => 'required',
                 'channel_based' => false,
                 'locale_based'  => true,
-            ], [
-                'name'          => 'instructions',
-                'title'         => 'admin::app.admin.system.instructions',
-                'type'          => 'textarea',
-                'channel_based' => false,
-                'locale_based'  => true,
             ],  [
                 'name'    => 'sort',
                 'title'   => 'admin::app.admin.system.sort_order',
@@ -84,12 +78,6 @@ return [
                 'title'         => 'admin::app.admin.system.status',
                 'type'          => 'boolean',
                 'validation'    => 'required',
-                'channel_based' => false,
-                'locale_based'  => true,
-            ], [
-                'name'          => 'mailing_address',
-                'title'         => 'admin::app.admin.system.mailing-address',
-                'type'          => 'textarea',
                 'channel_based' => false,
                 'locale_based'  => true,
             ],  [

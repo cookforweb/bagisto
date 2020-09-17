@@ -2,13 +2,8 @@
 <html>
     <head>
         <meta http-equiv="Cache-control" content="no-cache">
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
         <style type="text/css">
-            * {
-                font-family: DejaVu Sans;
-            }
-
             body, th, td, h5 {
                 font-size: 12px;
                 color: #000;
@@ -53,6 +48,7 @@
                 border-left: solid 1px #d3d3d3;
                 color: #3A3A3A;
                 vertical-align: middle;
+                font-family: DejaVu Sans; sans-serif;
             }
 
             .table tbody td p {
@@ -70,15 +66,17 @@
 
             .sale-summary tr td {
                 padding: 3px 5px;
+                font-family: DejaVu Sans; sans-serif;
             }
 
             .sale-summary tr.bold {
+                font-family: DejaVu Sans; sans-serif;
                 font-weight: 700;
             }
 
             .label {
                 color: #000;
-                font-weight: bold;
+                font-weight: 600;
             }
 
             .logo {
@@ -86,17 +84,6 @@
                 width: 70px;
             }
 
-            .merchant-details {
-                margin-bottom: 5px;
-            }
-
-            .merchant-details-title {
-                font-weight: bold;
-            }
-
-            .text-center {
-                text-align: center;
-            }
         </style>
     </head>
 
@@ -104,35 +91,16 @@
         <div class="container">
 
             <div class="header">
-                <div class="row">
-                    <div class="col-12">
-                        <h1 class="text-center">{{ __('admin::app.sales.invoices.invoice') }}</h1>
-                    </div>
-                </div>
                 @if (core()->getConfigData('sales.orderSettings.invoice_slip_design.logo'))
                     <div class="image">
                         <img class="logo" src="{{ Storage::url(core()->getConfigData('sales.orderSettings.invoice_slip_design.logo')) }}"/>
                     </div>
                 @endif
-                <div class="merchant-details">
-                    <div><span class="merchant-details-title">{{ core()->getConfigData('sales.shipping.origin.store_name') ? core()->getConfigData('sales.shipping.origin.store_name') : '' }}</span></div>
-                    <div>{{ core()->getConfigData('sales.shipping.origin.address1') ? core()->getConfigData('sales.shipping.origin.address1') : '' }}</div>
-                    <div>
-                        <span>{{ core()->getConfigData('sales.shipping.origin.zipcode') ? core()->getConfigData('sales.shipping.origin.zipcode') : '' }}</span>
-                        <span>{{ core()->getConfigData('sales.shipping.origin.city') ? core()->getConfigData('sales.shipping.origin.city') : '' }}</span></div>
-                    <div>{{ core()->getConfigData('sales.shipping.origin.state') ? core()->getConfigData('sales.shipping.origin.state') : '' }}</div>
-                    <div>{{ core()->getConfigData('sales.shipping.origin.country') ?  core()->country_name(core()->getConfigData('sales.shipping.origin.country')) : '' }}</div>
-                </div>
-                <div class="merchant-details">
-                    @if (core()->getConfigData('sales.shipping.origin.contact'))
-                        <div><span class="merchant-details-title">{{ __('admin::app.admin.system.contact-number') }}:</span> {{ core()->getConfigData('sales.shipping.origin.contact') }}</div>
-                    @endif
-                    @if (core()->getConfigData('sales.shipping.origin.vat_number'))
-                        <div><span class="merchant-details-title">{{ __('admin::app.admin.system.vat-number') }}:</span> {{ core()->getConfigData('sales.shipping.origin.vat_number') }}</div>
-                    @endif
-                    @if (core()->getConfigData('sales.shipping.origin.bank_details'))
-                        <div><span class="merchant-details-title">{{ __('admin::app.admin.system.bank-details') }}:</span> {{ core()->getConfigData('sales.shipping.origin.bank_details') }}</div>
-                    @endif
+                
+                <div class="address">
+                    <p>
+                      <b> {{ core()->getConfigData('sales.orderSettings.invoice_slip_design.address') }} </b>
+                    </p>
                 </div>
             </div>
 
@@ -140,17 +108,17 @@
 
                 <div class="row">
                     <span class="label">{{ __('shop::app.customer.account.order.view.invoice-id') }} -</span>
-                    <span class="value">#{{ $invoice->id }}</span>
+                    <span class="value">{{ $invoice->id }}</span>
                 </div>
 
                 <div class="row">
                     <span class="label">{{ __('shop::app.customer.account.order.view.order-id') }} -</span>
-                    <span class="value">#{{ $invoice->order->increment_id }}</span>
+                    <span class="value">{{ $invoice->order->increment_id }}</span>
                 </div>
 
                 <div class="row">
                     <span class="label">{{ __('shop::app.customer.account.order.view.order-date') }} -</span>
-                    <span class="value">{{ core()->formatDate($invoice->order->created_at, 'd-m-Y') }}</span>
+                    <span class="value">{{ core()->formatDate($invoice->order->created_at, 'M d, Y') }}</span>
                 </div>
 
                 <div class="table address">
@@ -167,7 +135,6 @@
                         <tbody>
                             <tr>
                                 <td>
-                                    <p>{{ $invoice->order->billing_address->company_name ?? '' }}</p>
                                     <p>{{ $invoice->order->billing_address->name }}</p>
                                     <p>{{ $invoice->order->billing_address->address1 }}</p>
                                     <p>{{ $invoice->order->billing_address->city }}</p>
@@ -181,7 +148,6 @@
 
                                 @if ($invoice->order->shipping_address)
                                     <td>
-                                        <p>{{ $invoice->order->shipping_address->company_name ?? '' }}</p>
                                         <p>{{ $invoice->order->shipping_address->name }}</p>
                                         <p>{{ $invoice->order->shipping_address->address1 }}</p>
                                         <p>{{ $invoice->order->shipping_address->city }}</p>
@@ -211,15 +177,6 @@
                             <tr>
                                 <td>
                                     {{ core()->getConfigData('sales.paymentmethods.' . $invoice->order->payment->method . '.title') }}
-
-                                    @php $additionalDetails = \Webkul\Payment\Payment::getAdditionalDetails($invoice->order->payment->method); @endphp
-
-                                    @if (! empty($additionalDetails))
-                                        <div>
-                                            <label class="label">{{ $additionalDetails['title'] }}:</label>
-                                            <p class="value">{{ $additionalDetails['value'] }}</p>
-                                        </div>
-                                    @endif
                                 </td>
 
                                 @if ($invoice->order->shipping_address)

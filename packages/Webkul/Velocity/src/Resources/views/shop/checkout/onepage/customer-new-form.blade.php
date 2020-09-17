@@ -206,7 +206,7 @@
                 v-validate="'required'"
                 name="shipping[postcode]"
                 v-model="address.shipping.postcode"
-                @keyup="validateForm('address-form')"
+                @change="validateForm('address-form')"
                 data-vv-as="&quot;{{ __('shop::app.checkout.onepage.postcode') }}&quot;" />
 
             <span class="control-error" v-if="errors.has('address-form.shipping[postcode]')">

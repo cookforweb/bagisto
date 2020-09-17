@@ -11,7 +11,7 @@
             <div class="page-header">
                 <div class="page-title">
                     <h1>
-                        <i class="icon angle-left-icon back-link" onclick="history.length > 1 ? history.go(-1) : window.location = '{{ route('admin.dashboard.index') }}';"></i>
+                        <i class="icon angle-left-icon back-link" onclick="history.length > 1 ? history.go(-1) : window.location = '{{ url('/admin/dashboard') }}';"></i>
 
                         {{ __('admin::app.catalog.attributes.edit-title') }}
                     </h1>
@@ -365,11 +365,8 @@
                             </td>
 
                             <td style="white-space: nowrap;" v-if="show_swatch && swatch_type == 'image'">
-                                <div class="control-group" :class="[errors.has('options[' + row.id + '][swatch_value]') ? 'has-error' : '']">
-                                    <img style="width: 36px;height: 36px;vertical-align: middle;background: #F2F2F2;border-radius: 2px;margin-right: 10px;" v-if="row.swatch_value_url" :src="row.swatch_value_url"/>
-                                    <input type="file" v-validate="'size:600'" accept="image/*" :name="'options[' + row.id + '][swatch_value]'"/>
-                                    <span class="control-error" v-if="errors.has('options[' + row.id + '][swatch_value]')">The image size must be less than 600 KB</span>
-                                </div>
+                                <img style="width: 36px;height: 36px;vertical-align: middle;background: #F2F2F2;border-radius: 2px;margin-right: 10px;" v-if="row.swatch_value_url" :src="row.swatch_value_url"/>
+                                <input type="file" accept="image/*" :name="'options[' + row.id + '][swatch_value]'"/>
                             </td>
 
                             <td>
@@ -382,7 +379,7 @@
                             @foreach (app('Webkul\Core\Repositories\LocaleRepository')->all() as $locale)
                                 <td>
                                     <div class="control-group" :class="[errors.has(localeInputName(row, '{{ $locale->code }}')) ? 'has-error' : '']">
-                                        <input type="text" v-validate="getOptionValidation(row, '{{ $locale->code }}')" v-model="row['locales']['{{ $locale->code }}']" :name="localeInputName(row, '{{ $locale->code }}')" class="control" data-vv-as="&quot;{{ $locale->name . ' (' . $locale->code . ')' }}&quot;"/>
+                                        <input type="text" v-validate="getOptionValidation(row, '{{ $locale->code }}')" v-model="row['{{ $locale->code }}']" :name="localeInputName(row, '{{ $locale->code }}')" class="control" data-vv-as="&quot;{{ $locale->name . ' (' . $locale->code . ')' }}&quot;"/>
                                         <span class="control-error" v-if="errors.has(localeInputName(row, '{{ $locale->code }}'))">@{{ errors.first(localeInputName(row, '{!! $locale->code !!}')) }}</span>
                                     </div>
                                 </td>
@@ -421,7 +418,7 @@
                     optionRowCount: 0,
                     optionRows: [],
                     show_swatch: "{{ $attribute->type == 'select' ? true : false  }}",
-                    swatch_type: "{{ $attribute->swatch_type == '' ? 'dropdown' : $attribute->swatch_type }}",
+                    swatch_type: "{{ $attribute->swatch_type }}",
                     isNullOptionChecked: false,
                     idNullOption: null
                 }
@@ -432,23 +429,22 @@
                     this.optionRowCount++;
 
                     var row = {
-                            'id': @json($option->id),
-                            'admin_name': @json($option->admin_name),
-                            'sort_order': @json($option->sort_order),
-                            'swatch_value': @json($option->swatch_value),
-                            'swatch_value_url': @json($option->swatch_value_url),
-                            'notRequired': '',
-                            'locales': {}
+                            'id': '{{ $option->id }}',
+                            'admin_name': '{{ $option->admin_name }}',
+                            'sort_order': '{{ $option->sort_order }}',
+                            'swatch_value': '{{ $option->swatch_value }}',
+                            'swatch_value_url': '{{ $option->swatch_value_url }}',
+                            'notRequired': ''
                         };
 
                     @if (empty($option->label))
                         this.isNullOptionChecked = true;
-                        this.idNullOption = @json($option->id);
+                        this.idNullOption = '{{ $option->id }}';
                         row['notRequired'] = true;
                     @endif
 
                     @foreach (app('Webkul\Core\Repositories\LocaleRepository')->all() as $locale)
-                        row['locales']['{{ $locale->code }}'] = @json($option->translate($locale->code)['label'] ?? '');
+                        row['{{ $locale->code }}'] = "{{ $option->translate($locale->code)['label'] ?? '' }}";
                     @endforeach
 
                     this.optionRows.push(row);
@@ -469,10 +465,10 @@
                 addOptionRow: function (isNullOptionRow) {
                     const rowCount = this.optionRowCount++;
                     const id = 'option_' + rowCount;
-                    let row = {'id': id, 'locales': {}};
+                    let row = {'id': id};
 
                     @foreach (app('Webkul\Core\Repositories\LocaleRepository')->all() as $locale)
-                        row['locales']['{{ $locale->code }}'] = '';
+                        row['{{ $locale->code }}'] = '';
                     @endforeach
 
                     row['notRequired'] = '';

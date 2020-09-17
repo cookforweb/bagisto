@@ -12,15 +12,12 @@ use Webkul\BookingProduct\Repositories\BookingProductEventTicketRepository;
 use Webkul\BookingProduct\Repositories\BookingProductRentalSlotRepository;
 use Webkul\BookingProduct\Repositories\BookingProductTableSlotRepository;
 use Webkul\BookingProduct\Repositories\BookingRepository;
-use Webkul\Product\Datatypes\CartItemValidationResult;
-use Webkul\Checkout\Models\CartItem;
-
 
 class Booking
 {
     /**
      * BookingProductRepository
-     *
+     * 
      * @return \Webkul\BookingProduct\Repositories\BookingProductRepository
      */
     protected $bookingProductRepository;
@@ -32,7 +29,7 @@ class Booking
 
     /**
      * BookingRepository
-     *
+     * 
      * @return \Webkul\BookingProduct\Repositories\BookingRepository
      */
     protected $bookingRepository;
@@ -96,7 +93,7 @@ class Booking
      * @param  string  $type
      * @return array
      */
-    public function getTypeHelper($type)
+    public function getTypeHepler($type)
     {
         return $this->typeHelpers[$type];
     }
@@ -319,10 +316,10 @@ class Booking
 
                     if ($qty && $currentTime <= $from) {
                         $slots[] = [
-                            'from'      => $from->format('h:i A'),
-                            'to'        => $to->format('h:i A'),
-                            'timestamp' => $from->getTimestamp() . '-' . $to->getTimestamp(),
-                            'qty'       => $qty,
+                            'from'      => $from->format('h:i A'), 
+                            'to'        => $to->format('h:i A'), 
+                            'timestamp' => $from->getTimestamp() . '-' . $to->getTimestamp(), 
+                            'qty'       => $qty, 
                         ];
                     }
                 } else {
@@ -371,7 +368,7 @@ class Booking
     public function isSlotExpired($cartItem)
     {
         $bookingProduct = $this->bookingProductRepository->findOneByField('product_id', $cartItem['product_id']);
-
+        
         $typeHelper = app($this->typeHelpers[$bookingProduct->type]);
 
         $slots = $typeHelper->getSlotsByDate($bookingProduct, $cartItem['additional']['booking']['date']);
@@ -435,7 +432,7 @@ class Booking
                         'option_label'   => Carbon::createFromTimeString($bookingProduct->available_to)->format('d F, Y'),
                     ]
                 ];
-
+                
                 break;
 
             case 'rental':
@@ -468,7 +465,7 @@ class Booking
                 ];
 
                 break;
-
+            
             case 'table':
                 $timestamps = explode('-', $data['booking']['slot']);
 
@@ -493,7 +490,7 @@ class Booking
                 }
 
                 break;
-
+            
             default:
                 $timestamps = explode('-', $data['booking']['slot']);
 
@@ -529,24 +526,15 @@ class Booking
     /**
      * Validate cart item product price
      *
-     * @param \Webkul\Checkout\Models\CartItem $item
-     *
-     * @return \Webkul\Product\Datatypes\CartItemValidationResult
+     * @param  \Webkul\Checkout\Contracts\CartItem  $item
+     * @return void
      */
-    public function validateCartItem(CartItem $item): CartItemValidationResult
+    public function validateCartItem($item)
     {
-        $result = new CartItemValidationResult();
-
-        if ($this->isCartItemInactive($item)) {
-            $result->itemIsInactive();
-
-            return $result;
-        }
-
-        $price = $item->product->getTypeInstance()->getFinalPrice($item->quantity);
+        $price = $item->product->getTypeInstance()->getFinalPrice();
 
         if ($price == $item->base_price) {
-            return $result;
+            return;
         }
 
         $item->base_price = $price;
@@ -556,23 +544,5 @@ class Booking
         $item->total = core()->convertPrice($price * $item->quantity);
 
         $item->save();
-
-        return $result;
-    }
-
-    /**
-     * Returns true, if cart item is inactive
-     *
-     * @param \Webkul\Checkout\Contracts\CartItem $item
-     *
-     * @return bool
-     */
-    public function isCartItemInactive(\Webkul\Checkout\Contracts\CartItem $item): bool
-    {
-        if ($item->product->status === 0) {
-            return true;
-        }
-
-        return false;
     }
 }

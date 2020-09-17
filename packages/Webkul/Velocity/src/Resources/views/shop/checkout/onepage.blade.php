@@ -209,22 +209,23 @@
                             this.$validator.validateAll(scope)
                             .then(result => {
                                 if (result) {
-                                    this.$root.showLoader();
+                                    document.body.style.cursor = 'wait';
 
                                     switch (scope) {
                                         case 'address-form':
                                             this.saveAddress();
+                                            document.body.style.cursor = 'default';
                                             break;
 
                                         case 'shipping-form':
                                             if (this.showShippingSection) {
-                                                this.$root.showLoader();
+                                                document.body.style.cursor = 'wait';
                                                 this.saveShipping();
                                                 break;
                                             }
 
                                         case 'payment-form':
-                                            this.$root.showLoader();
+                                            document.body.style.cursor = 'wait';
                                             this.savePayment();
 
                                             this.isPlaceOrderEnabled = ! this.validateAddressForm();
@@ -255,7 +256,6 @@
                                 let elementId = element.id;
 
                                 if (value == ""
-                                    && element.id != 'sign-btn'
                                     && element.id != 'billing[company_name]'
                                     && element.id != 'shipping[company_name]'
                                 ) {
@@ -300,7 +300,7 @@
                                 console.log(this.is_customer_exist);
 
                                 if (response.data)
-                                    this.$root.hideLoader();
+                                    document.body.style.cursor = 'default';
                             })
                             .catch(function (error) {})
                         })
@@ -340,34 +340,10 @@
                             let address = this.allAddress.forEach(address => {
                                 if (address.id == this.address.billing.address_id) {
                                     this.address.billing.address1 = [address.address1];
-
-                                    if (address.email) {
-                                        this.address.billing.email = address.email;
-                                    }
-
-                                    if (address.first_name) {
-                                        this.address.billing.first_name = address.first_name;
-                                    }
-
-                                    if (address.last_name) {
-                                        this.address.billing.last_name = address.last_name;
-                                    }
                                 }
 
                                 if (address.id == this.address.shipping.address_id) {
                                     this.address.shipping.address1 = [address.address1];
-
-                                    if (address.email) {
-                                        this.address.shipping.email = address.email;
-                                    }
-
-                                    if (address.first_name) {
-                                        this.address.shipping.first_name = address.first_name;
-                                    }
-
-                                    if (address.last_name) {
-                                        this.address.shipping.last_name = address.last_name;
-                                    }
                                 }
                             });
                         }
@@ -395,12 +371,9 @@
                                 shippingMethods = response.data.shippingMethods;
 
                                 this.getOrderSummary();
-
-                                this.$root.hideLoader();
                             })
                             .catch(error => {
                                 this.disable_button = false;
-                                this.$root.hideLoader();
 
                                 this.handleErrorResponse(error.response, 'address-form')
                             })
@@ -411,9 +384,11 @@
 
                         this.$http.post("{{ route('shop.checkout.save-shipping') }}", {'shipping_method': this.selected_shipping_method})
                             .then(response => {
-                                this.$root.hideLoader();
                                 this.disable_button = false;
+
                                 this.showPaymentSection = true;
+
+                                document.body.style.cursor = 'default';
 
                                 paymentHtml = Vue.compile(response.data.html)
 
@@ -431,7 +406,7 @@
                             })
                             .catch(error => {
                                 this.disable_button = false;
-                                this.$root.hideLoader();
+
                                 this.handleErrorResponse(error.response, 'shipping-form')
                             })
                     },
@@ -448,7 +423,7 @@
                                 this.disable_button = false;
 
                                 this.showSummarySection = true;
-                                this.$root.hideLoader();
+                                document.body.style.cursor = 'default';
 
                                 reviewHtml = Vue.compile(response.data.html)
                                 this.completed_step = this.step_numbers[response.data.jump_to_section] + 1;
@@ -460,7 +435,6 @@
                             })
                             .catch(error => {
                                 this.disable_button = false;
-                                this.$root.hideLoader();
                                 this.handleErrorResponse(error.response, 'payment-form')
                             });
                         }
@@ -471,23 +445,18 @@
                             this.disable_button = false;
                             this.isPlaceOrderEnabled = false;
 
-                            this.$root.showLoader();
-
                             this.$http.post("{{ route('shop.checkout.save-order') }}", {'_token': "{{ csrf_token() }}"})
-                            .then(response => {
+                            .then(function(response) {
                                 if (response.data.success) {
                                     if (response.data.redirect_url) {
-                                        this.$root.hideLoader();
                                         window.location.href = response.data.redirect_url;
                                     } else {
-                                        this.$root.hideLoader();
                                         window.location.href = "{{ route('shop.checkout.success') }}";
                                     }
                                 }
                             })
                             .catch(error => {
                                 this.disable_button = true;
-                                this.$root.hideLoader();
 
                                 window.showAlert(`alert-danger`, this.__('shop.general.alert.danger'), "{{ __('shop::app.common.error') }}");
                             })
@@ -529,19 +498,17 @@
 
                     backToSavedBillingAddress: function () {
                         this.new_billing_address = false;
-                        this.validateFormAfterAction()
+                        setTimeout(() => {
+                            this.validateForm('address-form');
+                        }, 0);
                     },
 
                     backToSavedShippingAddress: function () {
                         this.new_shipping_address = false;
-                        this.validateFormAfterAction()
-                    },
-
-                    validateFormAfterAction: function () {
                         setTimeout(() => {
                             this.validateForm('address-form');
                         }, 0);
-                    }
+                    },
                 }
             });
 

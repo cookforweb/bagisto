@@ -27,12 +27,6 @@ class Toolbar extends AbstractProduct
      */
     public function getAvailableLimits()
     {
-        if (core()->getConfigData('catalog.products.storefront.products_per_page')) {
-            $pages = explode(',', core()->getConfigData('catalog.products.storefront.products_per_page'));
-
-            return $pages;
-        }
-
         return [9, 15, 21, 28];
     }
 
@@ -87,18 +81,11 @@ class Toolbar extends AbstractProduct
     public function isOrderCurrent($key)
     {
         $params = request()->input();
-        $orderDirection = $params['order'] ?? 'asc';
 
-        if (isset($params['sort']) && $key == $params['sort'] . '-' . $orderDirection) {
+        if (isset($params['sort']) && $key == $params['sort'] . '-' . $params['order']) {
             return true;
-        } elseif (! isset($params['sort'])) {
-            $sortBy = core()->getConfigData('catalog.products.storefront.sort_by')
-                   ? core()->getConfigData('catalog.products.storefront.sort_by')
-                   : 'created_at-asc';
-
-            if ($key == $sortBy) {
-                return true;
-            }
+        } elseif (! isset($params['sort']) && $key == 'created_at-asc') {
+            return true;
         }
 
         return false;
@@ -151,31 +138,6 @@ class Toolbar extends AbstractProduct
             return $params['mode'];
         }
 
-        return core()->getConfigData('catalog.products.storefront.mode')
-               ? core()->getConfigData('catalog.products.storefront.mode')
-               : 'grid';
-    }
-
-    /**
-     * Returns the view option if mode is set by param then it will overwrite default one and return new mode
-     *
-     * @return string
-     */
-    public function getViewOption()
-    {
-        /* checking default option first */
-        $viewOption = core()->getConfigData('catalog.products.storefront.mode');
-
-        /* checking mode param if exist then overwrite the default option */
-        if ($this->isModeActive('grid')) {
-            $viewOption = 'grid';
-        }
-
-        /* checking mode param if exist then overwrite the default option */
-        if ($this->isModeActive('list')) {
-            $viewOption = 'list';
-        }
-
-        return $viewOption;
+        return 'grid';
     }
 }

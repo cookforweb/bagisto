@@ -40,10 +40,6 @@
                 </div>
 
                 <div>
-                    {{ $order->shipping_address->company_name ?? '' }}
-                </div>
-
-                <div>
                     {{ $order->shipping_address->name }}
                 </div>
 
@@ -86,10 +82,6 @@
                 </div>
 
                 <div>
-                    {{ $order->billing_address->company_name ?? '' }}
-                </div>
-
-                <div>
                     {{ $order->billing_address->name }}
                 </div>
 
@@ -107,11 +99,11 @@
                     {{ __('shop::app.mail.order.contact') }} : {{ $order->billing_address->phone }}
                 </div>
 
-                <div style="font-weight: bold; font-size: 16px; color: #242424;">
+                <div style="font-weight: bold;font-size: 16px; color: #242424;">
                     {{ __('shop::app.mail.order.payment') }}
                 </div>
 
-                <div style="font-weight: bold; font-size: 16px; color: #242424;">
+                <div style="font-size: 16px; color: #242424;">
                     {{ core()->getConfigData('sales.paymentmethods.' . $order->payment->method . '.title') }}
                 </div>
             </div>

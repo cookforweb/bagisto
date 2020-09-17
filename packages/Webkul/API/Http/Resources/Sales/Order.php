@@ -19,7 +19,6 @@ class Order extends JsonResource
     {
         return [
             'id'                                 => $this->id,
-            'increment_id'                       => $this->increment_id,
             'status'                             => $this->status,
             'status_label'                       => $this->status_label,
             'channel_name'                       => $this->channel_name,
@@ -101,10 +100,10 @@ class Order extends JsonResource
             'channel'                            => $this->when($this->channel_id, new ChannelResource($this->channel)),
             'shipping_address'                   => new OrderAddress($this->shipping_address),
             'billing_address'                    => new OrderAddress($this->billing_address),
+            'updated_at'                         => $this->updated_at,
             'items'                              => OrderItem::collection($this->items),
             'invoices'                           => Invoice::collection($this->invoices),
             'shipments'                          => Shipment::collection($this->shipments),
-            'updated_at'                         => $this->updated_at,
             'created_at'                         => $this->created_at,
         ];
     }

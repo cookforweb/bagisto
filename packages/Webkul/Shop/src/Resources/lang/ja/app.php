@@ -68,8 +68,7 @@ return [
         'no-results' => 'お探しの条件に合う検索結果が見つかりませんでした。',
         'page-title' => '検索',
         'found-results' => '検索結果',
-        'found-result' => '検索結果',
-        'analysed-keywords' => 'Analysed Keywords'
+        'found-result' => '検索結果'
     ],
 
     'reviews' => [
@@ -89,19 +88,6 @@ return [
     ],
 
     'customer' => [
-        'compare'           => [
-            'text'                  => '比較する',
-            'compare_similar_items' => '類似アイテムを比較する',
-            'add-tooltip'           => '製品を追加して比較リスト',
-            'added'                 => 'アイテムを比較リストに追加しました',
-            'already_added'         => 'アイテムは比較リストに既に追加されています',
-            'removed'               => '比較リストからアイテムを削除しました',
-            'removed-all'           => '比較リストからすべてのアイテムを削除しました',
-            'empty-text'            => "比較リストにアイテムがありません",
-            'product_image'         => 'Product Image',
-            'actions'               => 'Actions',
-        ],
-
         'signup-text' => [
             'account_exists' => '既に登録されております',
             'title' => 'アカウント登録'
@@ -173,11 +159,6 @@ return [
         'account' => [
             'dashboard' => 'プロフィールを編集',
             'menu' => 'メニュー',
-
-            'general' => [
-                'no' => '番号',
-                'yes' => 'はい',
-            ],
 
             'profile' => [
                 'index' => [
@@ -312,8 +293,6 @@ return [
                     'individual-refund' => '返金 #:refund_id',
                     'adjustment-refund' => '返金調整',
                     'adjustment-fee' => '調整手数料',
-                    'tracking-number' => '追跡番号',
-                    'cancel-confirm-msg' => 'この注文をキャンセルしてもよろしいですか ?'
                 ]
             ],
 
@@ -326,8 +305,6 @@ return [
                 'error' => 'アイテムのお気に入り追加に失敗しました。しばらくしてから再度お試し下さい。',
                 'add' => 'アイテムをお気に入りに追加',
                 'remove' => 'アイテムをお気に入りから削除',
-                'add-wishlist-text'     => '製品をウィッシュリストに追加',
-                'remove-wishlist-text'  => 'ウィッシュリストから商品を削除',
                 'moved' => 'アイテムをカートへ移動しました',
                 'move-error' => 'アイテムのお気に入り追加に失敗しました。しばらくしてから再度お試し下さい。',
                 'success' => 'アイテムをお気に入りに追加しました',
@@ -394,7 +371,6 @@ return [
         'new' => 'new',
         'empty' => 'このカテゴリーにアイテムがありません。',
         'add-to-cart' => 'カートに追加する',
-        'book-now' => '今予約する',
         'buy-now' => '今すぐ購入',
         'whoops' => 'すみません！',
         'quantity' => '数量',
@@ -402,10 +378,7 @@ return [
         'out-of-stock' => '在庫なし',
         'view-all' => '全て見る',
         'select-above-options' => '最初に上記のオプションを選択してください.',
-        'less-quantity' => '数量１未満は選択できません.',
-        'available-for-order' => '注文可能',
-        'settings' => 'Settings',
-        'compare_options' => 'Compare Options',
+        'less-quantity' => '数量１未満は選択できません.'
     ],
 
     'buynow' => [
@@ -445,8 +418,6 @@ return [
                 'success' => 'アイテムがカートに追加されました。',
                 'success-remove' => 'アイテムがカートから削除されました。',
                 'error-add' => 'アイテムをカートに追加できません。しばらくしてから再度お試し下さい。',
-                'inactive' => 'An item is inactive and was removed from cart',
-                'inactive-add' => 'Inactive item cannot be added to cart',
             ],
             'quantity-error' => 'ご希望の数量の在庫が現在ございません。',
             'cart-subtotal' => '小計',
@@ -461,7 +432,6 @@ return [
             'shipping' => '発送',
             'payment' => '支払い',
             'complete' => '完了',
-            'review' => 'レビュー',
             'billing-address' => '領収書宛先',
             'sign-in' => 'ログイン',
             'first-name' => '名',
@@ -551,16 +521,7 @@ return [
             'grand-total' => '合計',
             'final-summary' => '発送手続き完了後、お知らせメールを配信いたしますので、今しばらくお待ちください。',
             'help' => 'お問合せなどは下記メールアドレスへご連絡ください。:support_email',
-            'thanks' => 'ありがとう！',
-
-            'comment' => [
-                'subject' => '注文に新しいコメントが追加されました #:order_id',
-                'dear' => '親愛な :customer_name',
-                'final-summary' => '当店へのご関心をお寄せいただきありがとうございます',
-                'help' => '何か助けが必要な場合は、私たちに連絡してください :support_email',
-                'thanks' => 'ありがとう！',
-            ],
-
+            'thanks' => 'Gracias!',
             'cancel' => [
                 'subject' => '注文がキャンセルされました',
                 'heading' => '注文がキャンセルされました',
@@ -579,7 +540,7 @@ return [
                 'grand-total' => '合計',
                 'final-summary' => '私たちのお店にお越しいただき、ありがとうございます。',
                 'help' => 'お問合せなどは下記メールアドレスへご連絡ください。 :support_email',
-                'thanks' => 'ありがとう！',
+                'thanks' => 'Gracias!',
             ]
         ],
         'invoice' => [
@@ -603,12 +564,6 @@ return [
             'info' => 'お客様のパスワードリセットのリクエストがあったため、ご連絡致します。',
             'reset-password' => 'パスワードのリセット',
             'final-summary' => 'Si no has solicitado cambiar de contraseña, ninguna acción es requerida por tu parte.',
-            'thanks' => 'ありがとうございます。'
-        ],
-        'update-password' => [
-            'subject' => 'パスワードが更新されました',
-            'dear' => '様 :name',
-            'info' => 'パスワードを更新したため、このメールをお送りしています。',
             'thanks' => 'ありがとうございます。'
         ],
         'customer' => [

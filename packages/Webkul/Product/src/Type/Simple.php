@@ -53,12 +53,10 @@ class Simple extends AbstractType
      * @param  int  $qty
      * @return bool
      */
-    public function haveSufficientQuantity(int $qty): bool
+    public function haveSufficientQuantity($qty)
     {
         $backorders = core()->getConfigData('catalog.inventory.stock_options.backorders');
-
-        $backorders = ! is_null ($backorders) ? $backorders : false;
-
+        
         return $qty <= $this->totalQuantity() ? true : $backorders;
     }
 }

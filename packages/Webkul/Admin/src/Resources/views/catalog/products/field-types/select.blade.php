@@ -4,7 +4,7 @@
 
     @if ($attribute->code != 'tax_category_id')
 
-        @foreach ($attribute->options()->orderBy('sort_order')->get() as $option)
+        @foreach ($attribute->options as $option)
             <option value="{{ $option->id }}" {{ $option->id == $selectedOption ? 'selected' : ''}}>
                 {{ $option->admin_name }}
             </option>

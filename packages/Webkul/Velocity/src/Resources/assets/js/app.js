@@ -3,25 +3,22 @@ import accounting from 'accounting';
 import VueCarousel from 'vue-carousel';
 import VueToast from 'vue-toast-notification';
 import 'vue-toast-notification/dist/index.css';
-import de from 'vee-validate/dist/locale/de';
-import ar from 'vee-validate/dist/locale/ar';
-import VeeValidate, { Validator } from 'vee-validate';
-import axios from 'axios';
+import messagesAr from 'vee-validate/dist/locale/ar';
 
-window.axios = axios;
-window.VeeValidate = VeeValidate;
+window.axios = require("axios");
+window.VeeValidate = require("vee-validate");
 window.jQuery = window.$ = require("jquery");
 window.BootstrapSass = require("bootstrap-sass");
 
 Vue.use(VueToast);
+Vue.use(VeeValidate);
 Vue.use(VueCarousel);
 Vue.use(BootstrapSass);
 Vue.prototype.$http = axios;
 
 Vue.use(VeeValidate, {
     dictionary: {
-        ar: ar,
-        de: de,
+        ar: { messages: messagesAr }
     }
 });
 
@@ -67,7 +64,7 @@ $(document).ready(function () {
                 'sharedRootCategories': [],
                 'responsiveSidebarTemplate': '',
                 'responsiveSidebarKey': Math.random(),
-                'baseUrl': document.querySelector("script[src$='velocity.js']").getAttribute('baseUrl')
+                'baseUrl': document.querySelector("script[src$='velocity.js']").getAttribute('baseUrl'),
             }
         },
 
@@ -164,18 +161,11 @@ $(document).ready(function () {
             },
 
             isMobile: function () {
-                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i|/mobi/i.test(navigator.userAgent)) {
-                    if (this.isMaxWidthCrossInLandScape()) {
-                        return false;
-                    }
-                    return true
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                  return true
                 } else {
-                    return false
+                  return false
                 }
-            },
-
-            isMaxWidthCrossInLandScape: function() {
-                return window.innerWidth > 900;
             },
 
             getDynamicHTML: function (input) {
@@ -227,15 +217,10 @@ $(document).ready(function () {
                 miniCartKey: 0,
                 quickView: false,
                 productDetails: [],
-                showPageLoader: false,
             }
         },
 
         created: function () {
-            setTimeout(() => {
-                document.body.classList.remove("modal-open");
-            }, 0);
-
             window.addEventListener('click', () => {
                 let modals = document.getElementsByClassName('sensitive-modal');
 
@@ -313,6 +298,12 @@ $(document).ready(function () {
             },
 
             addFlashMessages: function () {
+                // const flashes = this.$refs.flashes;
+
+                // flashMessages.forEach(function (flash) {
+                //     flashes.addFlash(flash);
+                // }, this);
+
                 if (window.flashMessages.alertMessage)
                     window.alert(window.flashMessages.alertMessage);
             },
@@ -342,20 +333,6 @@ $(document).ready(function () {
                     })
                 });
             },
-
-            showLoader: function () {
-                $('#loader').show();
-                $('.overlay-loader').show();
-
-                document.body.classList.add("modal-open");
-            },
-
-            hideLoader: function () {
-                $('#loader').hide();
-                $('.overlay-loader').hide();
-
-                document.body.classList.remove("modal-open");
-            }
         }
     });
 

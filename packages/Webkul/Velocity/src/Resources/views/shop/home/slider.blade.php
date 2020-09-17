@@ -2,20 +2,20 @@
     $direction = core()->getCurrentLocale()->direction;
 @endphp
 
-@if ($velocityMetaData && $velocityMetaData->slider)
+@if ($velocityMetaData->slider)
     <slider-component direction="{{ $direction }}"></slider-component>
 @endif
 
 @push('scripts')
     <script type="text/x-template" id="slider-template">
-        <div class="slides-container {{ $direction }}">
+        <div class="slides-container ltr">
             <carousel-component
                 loop="true"
                 timeout="5000"
                 autoplay="true"
                 slides-per-page="1"
                 navigation-enabled="hide"
-                locale-direction="direction"
+                :slider-direction="direction == 'rtl' ? 'backward' : 'forward'"
                 :slides-count="{{ ! empty($sliderData) ? sizeof($sliderData) : 1 }}">
 
                 @if (! empty($sliderData))

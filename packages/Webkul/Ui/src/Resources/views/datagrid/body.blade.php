@@ -1,5 +1,5 @@
 <tbody>
-    @if ($records instanceof \Illuminate\Pagination\LengthAwarePaginator && count($records))
+    @if (count($records))
         @foreach ($records as $key => $record)
             <tr>
                 @if ($enableMassActions)
@@ -59,7 +59,7 @@
                                     data-method="{{ $action['method'] }}"
                                     data-action="{{ route($action['route'], $record->{$index}) }}"
                                     data-token="{{ csrf_token() }}"
-
+                                    
                                     @if (isset($action['target']))
                                         target="{{ $action['target'] }}"
                                     @endif
@@ -78,9 +78,7 @@
         @endforeach
     @else
         <tr>
-            <td colspan="10">
-                <p style="text-align: center;">{{ $norecords }}</p>
-            </td>
+            <td colspan="10" style="text-align: center;">{{ $norecords }}</td>
         </tr>
     @endif
 </tbody>

@@ -18,7 +18,7 @@ class Payment
 
         return [
             'jump_to_section' => 'payment',
-            'paymentMethods'  => $paymentMethods,
+            'paymentMethods'  => $this->getPaymentMethods(),
             'html'            => view('shop::checkout.onepage.payment', compact('paymentMethods'))->render(),
         ];
     }
@@ -67,18 +67,5 @@ class Payment
         $payment = app(Config::get('paymentmethods.' . $cart->payment->method . '.class'));
 
         return $payment->getRedirectUrl();
-    }
-
-    /**
-     * Returns payment method additional information
-     *
-     * @param  string  $code
-     * @return array
-     */
-    public static function getAdditionalDetails($code)
-    {
-        $paymentMethodClass =  app(Config::get('paymentmethods.' . $code . '.class'));
-        
-        return $paymentMethodClass->getAdditionalDetails();
     }
 }

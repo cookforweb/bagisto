@@ -71,8 +71,7 @@ return [
         'no-results' => 'نتیجه ای پیدا نشد',
         'page-title' => 'فروشگاه - جستجو',
         'found-results' => 'نتایج جستجو یافت شد',
-        'found-result' => 'نتیجه جستجو یافت شد',
-        'analysed-keywords' => 'Analysed Keywords'
+        'found-result' => 'نتیجه جستجو یافت شد'
     ],
 
     'reviews' => [
@@ -92,19 +91,6 @@ return [
     ],
 
     'customer' => [
-        'compare' => [
-            'text' => 'مقایسه کنید',
-            'compare_similar_items' => 'موارد مشابه را مقایسه کنید',
-            'add-tooltip' => 'اضافه کردن محصول برای مقایسه لیست',
-            'added' => 'مورد با موفقیت برای مقایسه لیست اضافه شد',
-            'already_added' => 'مورد در حال حاضر برای مقایسه لیست اضافه شده است',
-            'removed' => 'مورد با موفقیت از لیست مقایسه حذف شد',
-            'removed-all' => 'همه موارد با موفقیت از لیست مقایسه حذف شدند',
-            'empty-text' => "شما هیچ موردی را در لیست مقایسه خود ندارید",
-            'product_image' => 'Product Image',
-            'actions' => 'Actions',
-        ],
-
         'signup-text' => [
             'account_exists' => 'قبلاً حساب داشته باشید',
             'title' => 'ورود'
@@ -176,11 +162,6 @@ return [
         'account' => [
             'dashboard' => 'مشتری - ویرایش نمایه',
             'menu' => 'فهرست',
-
-            'general' => [
-                'no' => 'نه',
-                'yes' => 'آره',
-            ],
 
             'profile' => [
                 'index' => [
@@ -332,8 +313,6 @@ return [
                     'individual-refund' => '#:refund_id بازپرداخت',
                     'adjustment-refund' => 'بازپرداخت تنظیم',
                     'adjustment-fee' => 'هزینه تنظیم',
-                    'tracking-number' => 'Tracking Number',
-                    'cancel-confirm-msg' => 'Are you sure you want to cancel this order ?'
                 ]
             ],
 
@@ -346,8 +325,6 @@ return [
                 'error' => 'به دلیل مشکلات ناشناخته نمی توان محصول را به لیست دلخواه اضافه کرد ، لطفا بعداً بررسی کنید',
                 'add' => 'مورد با موفقیت به لیست دلخواه اضافه شد',
                 'remove' => 'مورد با موفقیت از لیست دلخواه حذف شد',
-                'add-wishlist-text' => 'محصول را به لیست دلخواه اضافه کنید',
-                'remove-wishlist-text' => 'محصول را از لیست دلخواه حذف کنید',
                 'moved' => 'مورد با موفقیت به سبد خرید منتقل شد',
                 'option-missing' => 'گزینه های محصول وجود ندارد ، بنابراین مورد را نمی توان به لیست دلخواه منتقل کرد.',
                 'move-error' => 'مورد را نمی توان به لیست دلخواه منتقل کرد ، لطفا بعداً دوباره امتحان کنید',
@@ -391,7 +368,6 @@ return [
         'layered-nav-title' => 'خرید بوسیله ی',
         'price-label' => 'به اندازه کم',
         'remove-filter-link-title' => 'همه را پاک کن',
-        'filter-to' => 'to',
         'sort-by' => 'مرتب سازی بر اساس',
         'from-a-z' => 'از A-Z',
         'from-z-a' => 'از Z-A',
@@ -416,7 +392,6 @@ return [
         'new' => 'جدید',
         'empty' => 'هیچ کالایی در این گروه موجود نیست',
         'add-to-cart' => 'افزودن به سبد خرید',
-        'book-now' => 'اکنون ثبت کن',
         'buy-now' => 'هم اکنون خریداری کنید',
         'whoops' => 'وای!',
         'quantity' => 'مقدار',
@@ -436,9 +411,7 @@ return [
         'your-customization' => 'شخصی سازی شما',
         'total-amount' => 'مقدار کل',
         'none' => 'هیچ یک',
-        'available-for-order' => 'Available for Order',
-        'settings' => 'Settings',
-        'compare_options' => 'Compare Options',
+        'available' => 'Available'
     ],
 
     // 'reviews' => [
@@ -483,8 +456,6 @@ return [
                 'success' => 'مورد با موفقیت به سبد خرید اضافه شد',
                 'success-remove' => 'مورد با موفقیت از سبد خرید حذف شد',
                 'error-add' => 'لطفاً موردی را به سبد خرید اضافه نکرد ، لطفا بعداً دوباره امتحان کنید',
-                'inactive' => 'An item is inactive and was removed from cart',
-                'inactive-add' => 'Inactive item cannot be added to cart',
             ],
 
             'quantity-error' => 'مقدار درخواستی در دسترس نیست',
@@ -502,7 +473,6 @@ return [
             'shipping' => 'حمل دریایی',
             'payment' => 'پرداخت',
             'complete' => 'تکمیل',
-            'review' => 'مرور',
             'billing-address' => 'آدرس قبض',
             'sign-in' => 'ورود',
             'company-name' => 'نام شرکت',
@@ -600,15 +570,6 @@ return [
             'final-summary' => 'با تشکر از علاقه شما به فروشگاه ما ، شماره حمل و نقل را برای شما ارسال می کنیم',
             'help' => 'در صورت نیاز به هر نوع کمک ، لطفا با ما تماس بگیرید :support_email',
             'thanks' => 'با تشکر!',
-
-            'comment' => [
-                'subject' => '#:order_id نظر جدیدی به سفارش شما اضافه شد',
-                'dear' => ':customer_name عزیز',
-                'final-summary' => 'با تشکر از علاقه شما به فروشگاه ما',
-                'help' => ':support_email در صورت نیاز به هر نوع کمک ، لطفا با ما تماس بگیرید',
-                'thanks' => 'با تشکر!',
-            ],
-
             'cancel' => [
                 'subject' => 'تأیید سفارش را لغو کنید',
                 'heading' => 'سفارش لغو شد',
@@ -662,13 +623,6 @@ return [
             'info' => 'شما این ایمیل را دریافت می کنید زیرا ما درخواست بازنشانی رمزعبور را برای حساب شما دریافت کردیم',
             'reset-password' => 'بازنشانی گذرواژه',
             'final-summary' => 'اگر درخواست بازنشانی گذرواژه را نکردید ، دیگر نیازی به اقدامات لازم نیست',
-            'thanks' => 'با تشکر'
-        ],
-
-        'update-password' => [
-            'subject' => 'پسورد آپدیت شد',
-            'dear' => ':name عزیز',
-            'info' => 'شما این ایمیل را دریافت می کنید زیرا رمز خود را به روز کرده اید.',
             'thanks' => 'با تشکر'
         ],
 

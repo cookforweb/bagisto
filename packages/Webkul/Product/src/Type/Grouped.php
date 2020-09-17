@@ -20,7 +20,7 @@ class Grouped extends AbstractType
      * @var \Webkul\Product\Repositories\ProductGroupedProductRepository
      */
     protected $productGroupedProductRepository;
-
+    
     /**
      * Skip attribute for downloadable product type
      *
@@ -30,7 +30,7 @@ class Grouped extends AbstractType
 
     /**
      * These blade files will be included in product edit page
-     *
+     * 
      * @var array
      */
     protected $additionalViews = [
@@ -106,7 +106,7 @@ class Grouped extends AbstractType
      */
     public function getChildrenIds()
     {
-        return array_unique($this->product->grouped_products()->pluck('associated_product_id')->toArray());
+        return array_unique($this->product->grouped_products()->pluck('product_id')->toArray());
     }
 
     /**
@@ -124,7 +124,7 @@ class Grouped extends AbstractType
      *
      * @return float
      */
-    public function getMinimalPrice($qty = null)
+    public function getMinimalPrice()
     {
         $minPrices = [];
 
@@ -140,55 +140,14 @@ class Grouped extends AbstractType
     }
 
     /**
-     * @return bool
-     */
-    public function isSaleable()
-    {
-        if (!$this->product->status) {
-            return false;
-        }
-
-        if (ProductFlat::query()->select('id')->whereIn('product_id', $this->getChildrenIds())->where('status', 0)->first()) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Get group product special price
-     *
-     * @return boolean
-     */
-    private function checkGroupProductHaveSpecialPrice()
-    {
-        $haveSpecialPrice = false;
-        foreach ($this->product->grouped_products as $groupOptionProduct) {
-            if ($groupOptionProduct->associated_product->getTypeInstance()->haveSpecialPrice()) {
-                $haveSpecialPrice = true;
-                break;
-            }
-        }
-        return $haveSpecialPrice;
-    }
-
-    /**
      * Get product minimal price
      *
      * @return string
      */
     public function getPriceHtml()
     {
-        $html = '';
-
-        if ($this->checkGroupProductHaveSpecialPrice())
-            $html .= '<div class="sticker sale">' . trans('shop::app.products.sale') . '</div>';
-
-        $html .= '<span class="price-label">' . trans('shop::app.products.starting-at') . '</span>'
-        . ' '
-        . '<span class="final-price">' . core()->currency($this->getMinimalPrice()) . '</span>';
-
-        return $html;
+        return '<span class="price-label">' . trans('shop::app.products.starting-at') . '</span>'
+            . '<span class="final-price">' . core()->currency($this->getMinimalPrice()) . '</span>';
     }
 
     /**
@@ -220,7 +179,7 @@ class Grouped extends AbstractType
             if (is_string($cartProducts)) {
                 return $cartProducts;
             }
-
+                
             $products = array_merge($products, $cartProducts);
         }
 

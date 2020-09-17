@@ -3,13 +3,10 @@
 namespace Webkul\Product\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Laravel\Scout\Searchable;
 use Webkul\Product\Contracts\ProductFlat as ProductFlatContract;
 
 class ProductFlat extends Model implements ProductFlatContract
 {
-    use Searchable;
-
     protected $table = 'product_flat';
 
     protected $guarded = [
@@ -19,16 +16,6 @@ class ProductFlat extends Model implements ProductFlatContract
     ];
 
     public $timestamps = false;
-
-    /**
-     * Get the index name for the model.
-     *
-     * @return string
-     */
-    public function searchableAs()
-    {
-        return 'products_index';
-    }
 
     /**
      * Retrieve type instance
@@ -99,11 +86,11 @@ class ProductFlat extends Model implements ProductFlatContract
     }
 
     /**
-     * @param int $qty
+     * @param integer $qty
      *
      * @return bool
      */
-    public function haveSufficientQuantity(int $qty): bool
+    public function haveSufficientQuantity($qty)
     {
         return $this->product->haveSufficientQuantity($qty);
     }

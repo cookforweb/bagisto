@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import Vue from 'vue';
-import VeeValidate, { Validator } from 'vee-validate';
+import VeeValidate from 'vee-validate';
 import de from 'vee-validate/dist/locale/de';
 import ar from 'vee-validate/dist/locale/ar';
 import axios from 'axios';
@@ -38,9 +38,7 @@ $(document).ready(function () {
         el: "#app",
 
         data: {
-            modalIds: {},
-
-            show_loader: false
+            modalIds: {}
         },
 
         mounted: function () {
@@ -116,14 +114,6 @@ $(document).ready(function () {
 
             showModal(id) {
                 this.$set(this.modalIds, id, true);
-            },
-
-            showLoader() {
-                this.show_loader = true;
-            },
-
-            hideLoader() {
-                this.show_loader = false;
             }
         }
     });

@@ -213,8 +213,6 @@ class OrderItem extends Model implements OrderItemContract
 
         $array['qty_to_refund'] = $this->qty_to_refund;
 
-        $array['downloadable_links'] = $this->downloadable_link_purchased;
-
         return $array;
     }
 }

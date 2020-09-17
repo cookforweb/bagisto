@@ -77,7 +77,7 @@ class ContentDataGrid extends DataGrid
             'type'       => 'string',
             'sortable'   => true,
             'searchable' => true,
-            'filterable' => false,
+            'filterable' => true,
             'wrapper'    => function($value) {
                 if ($value->content_type == 'category') {
                     return 'Category Slug';

@@ -13,11 +13,7 @@ class NewsLetterDataGrid extends DataGrid
 
     public function prepareQueryBuilder()
     {
-
-
-        $queryBuilder = DB::table('subscribers_list')->select('subscribers_list.id', 'subscribers_list.is_subscribed as status', 'subscribers_list.email');
-
-        $this->addFilter('status', 'subscribers_list.is_subscribed');
+        $queryBuilder = DB::table('subscribers_list')->addSelect('id', 'is_subscribed', 'email');
 
         $this->setQueryBuilder($queryBuilder);
     }
@@ -34,14 +30,14 @@ class NewsLetterDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'status',
+            'index'      => 'is_subscribed',
             'label'      => trans('admin::app.datagrid.subscribed'),
-            'type'       => 'boolean',
-            'searchable' => true,
+            'type'       => 'string',
+            'searchable' => false,
             'sortable'   => true,
             'filterable' => true,
-            'wrapper'    => function ($value) {
-                if ($value->status === 1) {
+            'wrapper'    => function($value) {
+                if ($value->is_subscribed == 1) {
                     return trans('admin::app.datagrid.true');
                 } else {
                     return trans('admin::app.datagrid.false');

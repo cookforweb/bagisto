@@ -2,15 +2,12 @@
 
 namespace Webkul\API\Http\Controllers\Shop;
 
-use Cart;
-use Exception;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Event;
 use Webkul\Checkout\Repositories\CartRepository;
 use Webkul\Checkout\Repositories\CartItemRepository;
-use Webkul\Customer\Repositories\WishlistRepository;
 use Webkul\API\Http\Resources\Checkout\Cart as CartResource;
+use Cart;
+use Webkul\Customer\Repositories\WishlistRepository;
 
 class CartController extends Controller
 {
@@ -45,9 +42,9 @@ class CartController extends Controller
     /**
      * Controller instance
      *
-     * @param \Webkul\Checkout\Repositories\CartRepository     $cartRepository
-     * @param \Webkul\Checkout\Repositories\CartItemRepository $cartItemRepository
-     * @param \Webkul\Checkout\Repositories\WishlistRepository $wishlistRepository
+     * @param  \Webkul\Checkout\Repositories\CartRepository  $cartRepository
+     * @param  \Webkul\Checkout\Repositories\CartItemRepository  $cartItemRepository
+     * @param  \Webkul\Checkout\Repositories\WishlistRepository  $wishlistRepository
      */
     public function __construct(
         CartRepository $cartRepository,
@@ -70,9 +67,9 @@ class CartController extends Controller
     }
 
     /**
-     * Get customer cart.
+     * Get customer cart
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function get()
     {
@@ -89,11 +86,10 @@ class CartController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
-    public function store($id): ?JsonResponse
+    public function store($id)
     {
         if (request()->get('is_buy_now')) {
             Event::dispatch('shop.item.buy-now', $id);
@@ -101,46 +97,36 @@ class CartController extends Controller
 
         Event::dispatch('checkout.cart.item.add.before', $id);
 
-        try {
-            $result = Cart::addProduct($id, request()->except('_token'));
+        $result = Cart::addProduct($id, request()->except('_token'));
 
-            if (is_array($result) && isset($result['warning'])) {
-                return response()->json([
-                    'error' => $result['warning'],
-                ], 400);
-            }
-
-            if ($customer = auth($this->guard)->user()) {
-                $this->wishlistRepository->deleteWhere(['product_id' => $id, 'customer_id' => $customer->id]);
-            }
-
-            Event::dispatch('checkout.cart.item.add.after', $result);
-
-            Cart::collectTotals();
-
-            $cart = Cart::getCart();
+        if (! $result) {
+            $message = session()->get('warning') ?? session()->get('error');
 
             return response()->json([
-                'message' => __('shop::app.checkout.cart.item.success'),
-                'data'    => $cart ? new CartResource($cart) : null,
-            ]);
-        } catch (Exception $e) {
-            Log::error('API CartController: ' . $e->getMessage(),
-                ['product_id' => $id, 'cart_id' => cart()->getCart() ?? 0]);
-
-            return response()->json([
-                'error' => [
-                    'message' => $e->getMessage(),
-                    'code'    => $e->getCode()
-                ]
-            ]);
+                'error' => session()->get('warning'),
+            ], 400);
         }
+
+        if ($customer = auth($this->guard)->user()) {
+            $this->wishlistRepository->deleteWhere(['product_id' => $id, 'customer_id' => $customer->id]);
+        }
+
+        Event::dispatch('checkout.cart.item.add.after', $result);
+
+        Cart::collectTotals();
+
+        $cart = Cart::getCart();
+
+        return response()->json([
+            'message' => __('shop::app.checkout.cart.item.success'),
+            'data'    => $cart ? new CartResource($cart) : null,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function update()
     {
@@ -175,7 +161,7 @@ class CartController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function destroy()
     {
@@ -196,9 +182,8 @@ class CartController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param int $id
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
      */
     public function destroyItem($id)
     {
@@ -221,9 +206,7 @@ class CartController extends Controller
     /**
      * Function to move a already added product to wishlist will run only on customer authentication.
      *
-     * @param \Webkul\Checkout\Repositories\CartItemRepository $id
-     *
-     * @return \Illuminate\Http\JsonResponse
+     * @param  \Webkul\Checkout\Repositories\CartItemRepository  $id
      */
     public function moveToWishlist($id)
     {
@@ -240,57 +223,6 @@ class CartController extends Controller
         return response()->json([
             'message' => __('shop::app.checkout.cart.move-to-wishlist-success'),
             'data'    => $cart ? new CartResource($cart) : null,
-        ]);
-    }
-
-    /**
-     * Apply coupon code.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function applyCoupon()
-    {
-        $couponCode = request()->get('code');
-
-        try {
-            if (strlen($couponCode)) {
-                Cart::setCouponCode($couponCode)->collectTotals();
-
-                if (Cart::getCart()->coupon_code == $couponCode) {
-                    return response()->json([
-                        'success' => true,
-                        'message' => trans('shop::app.checkout.total.success-coupon'),
-                    ]);
-                }
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => trans('shop::app.checkout.total.invalid-coupon'),
-            ]);
-        } catch (\Exception $e) {
-            report($e);
-
-            return response()->json([
-                'success' => false,
-                'message' => trans('shop::app.checkout.total.coupon-apply-issue'),
-            ]);
-        }
-
-    }
-
-    /**
-     * Remove coupon code.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function removeCoupon()
-    {
-        Cart::removeCouponCode()->collectTotals();
-
-        return response()->json([
-            'success' => true,
-            'message' => trans('shop::app.checkout.total.remove-coupon'),
         ]);
     }
 }

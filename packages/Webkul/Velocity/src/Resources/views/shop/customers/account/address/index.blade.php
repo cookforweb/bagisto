@@ -6,9 +6,7 @@
 
 @section('page-detail-wrapper')
     @if ($addresses->isEmpty())
-
-        <a href="{{ route('customer.address.create') }}" class="theme-btn light unset address-button">
-
+        <a href="{{ route('customer.address.create') }}" class="theme-btn light unset pull-right">
             {{ __('shop::app.customer.account.address.index.add') }}
         </a>
     @endif
@@ -82,18 +80,3 @@
         }
     </script>
 @endpush
-
-@if ($addresses->isEmpty())
-    <style>
-        a#add-address-button {
-            position: absolute;
-            margin-top: 92px;
-        }
-
-        .address-button {
-            position: absolute;
-            z-index: 1 !important;
-            margin-top: 110px !important;
-        }
-    </style>
-@endif

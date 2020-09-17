@@ -213,8 +213,8 @@
                                             <img class="item-image" src="{{ $productBaseImage['small_image_url'] }}" />
                                         </div>
 
-                                        <div class="description do-not-cross-arrow">
-                                            <div class="name ellipsis">
+                                        <div class="description">
+                                            <div class="name">
                                                 @if (isset($item->name))
                                                     {{ $item->name }}
                                                 @endif
@@ -265,8 +265,8 @@
                                             <span class="icon profile-pic-icon"></span>
                                         </div>
 
-                                        <div class="description do-not-cross-arrow">
-                                            <div class="name ellipsis">
+                                        <div class="description">
+                                            <div class="name">
                                                 {{ $item->customer_full_name }}
                                             </div>
 
@@ -323,8 +323,8 @@
                                             <img class="item-image" src="{{ $productBaseImage['small_image_url'] }}" />
                                         </div>
 
-                                        <div class="description do-not-cross-arrow">
-                                            <div class="name ellipsis">
+                                        <div class="description">
+                                            <div class="name">
                                                 @if (isset($item->product->name))
                                                     {{ $item->product->name }}
                                                 @endif
@@ -369,11 +369,11 @@
     <script type="text/x-template" id="date-filter-template">
         <div>
             <div class="control-group date">
-                <date @onChange="applyFilter('start', $event)" hide-remove-button="1"><input type="text" class="control" id="start_date" value="{{ $startDate->format('Y-m-d') }}" placeholder="{{ __('admin::app.dashboard.from') }}" v-model="start"/></date>
+                <date @onChange="applyFilter('start', $event)"><input type="text" class="control" id="start_date" value="{{ $startDate->format('Y-m-d') }}" placeholder="{{ __('admin::app.dashboard.from') }}" v-model="start"/></date>
             </div>
 
             <div class="control-group date">
-                <date @onChange="applyFilter('end', $event)" hide-remove-button="1"><input type="text" class="control" id="end_date" value="{{ $endDate->format('Y-m-d') }}" placeholder="{{ __('admin::app.dashboard.to') }}" v-model="end"/></date>
+                <date @onChange="applyFilter('end', $event)"><input type="text" class="control" id="end_date" value="{{ $endDate->format('Y-m-d') }}" placeholder="{{ __('admin::app.dashboard.to') }}" v-model="end"/></date>
             </div>
         </div>
     </script>

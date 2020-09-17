@@ -25,11 +25,7 @@
                             @{{ ticket.name }}
                         </div>
 
-                        <div v-if="ticket.original_formated_price" class="ticket-price">
-                            <span class="regular-price">@{{ ticket.original_formated_price }}</span>
-                            <span class="special-price">@{{ ticket.formated_price_text }}</span>
-                        </div>
-                        <div v-else class="ticket-price">
+                        <div class="ticket-price">
                             @{{ ticket.formated_price_text }}
                         </div>
                     </div>
@@ -66,15 +62,4 @@
 
     </script>
 
-    <style>
-        .ticket-price .regular-price{
-            color: #a5a5a5;
-            text-decoration: line-through;
-            margin-right: 5px;
-        }
-        .ticket-price .special-price {
-            color: #ff6472;
-            font-size: larger;
-        }
-    </style>
 @endpush

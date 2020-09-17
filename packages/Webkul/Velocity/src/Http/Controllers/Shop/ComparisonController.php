@@ -17,7 +17,7 @@ class ComparisonController extends Controller
     {
         if (request()->get('data')) {
             $productSlugs = null;
-
+            
             $productCollection = [];
 
             if (auth()->guard('customer')->user()) {
@@ -76,24 +76,10 @@ class ComparisonController extends Controller
 
         if (! $compareProduct) {
             // insert new row
-
-            $productFlatRepository = app('\Webkul\Product\Models\ProductFlat');
-
-            $productFlat = $productFlatRepository
-                            ->where('id', $productId)
-                            ->orWhere('parent_id', $productId)
-                            ->orWhere('id', $productId)
-                            ->get()
-                            ->first();
-
-            if ($productFlat) {
-                $productId = $productFlat->id;
-
-                $this->compareProductsRepository->create([
-                    'customer_id'     => $customerId,
-                    'product_flat_id' => $productId,
-                ]);
-            }
+            $this->compareProductsRepository->create([
+                'customer_id'     => $customerId,
+                'product_flat_id' => $productId,
+            ]);
 
             return response()->json([
                 'status'  => 'success',
@@ -123,19 +109,17 @@ class ComparisonController extends Controller
             $this->compareProductsRepository->deleteWhere([
                 'customer_id' => auth()->guard('customer')->user()->id,
             ]);
-            $message = trans('velocity::app.customer.compare.removed-all');
         } else {
             // delete individual
             $this->compareProductsRepository->deleteWhere([
                 'product_flat_id' => request()->get('productId'),
                 'customer_id'     => auth()->guard('customer')->user()->id,
             ]);
-            $message = trans('velocity::app.customer.compare.removed');
         }
 
         return [
             'status'  => 'success',
-            'message' => $message,
+            'message' => trans('velocity::app.customer.compare.removed'),
             'label'   => trans('velocity::app.shop.general.alert.success'),
         ];
     }

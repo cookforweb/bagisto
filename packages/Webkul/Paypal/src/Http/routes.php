@@ -12,3 +12,5 @@ Route::group(['middleware' => ['web']], function () {
 });
 
 Route::get('paypal/standard/ipn', 'Webkul\Paypal\Http\Controllers\StandardController@ipn')->name('paypal.standard.ipn');
+
+Route::post('paypal/standard/ipn', 'Webkul\Paypal\Http\Controllers\StandardController@ipn')->name('paypal.standard.ipn');

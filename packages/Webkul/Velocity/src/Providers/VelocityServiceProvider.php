@@ -71,11 +71,7 @@ class VelocityServiceProvider extends ServiceProvider
         $loader->alias('velocity', VelocityFacade::class);
     }
 
-    /**
-     * this function will provide global variables shared by view (blade files)
-     *
-     * @return boolean
-     */
+    // this function will provide global variables shared by view (blade files)
     private function loadPublishableAssets()
     {
         $this->publishes([
@@ -89,11 +85,7 @@ class VelocityServiceProvider extends ServiceProvider
         return true;
     }
 
-    /**
-     * this function will provide global variables shared by view (blade files)
-     *
-     * @return boolean
-     */
+    // this function will provide global variables shared by view (blade files)
     private function loadGloableVariables()
     {
         $velocityHelper = app('Webkul\Velocity\Helpers\Helper');

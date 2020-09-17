@@ -5,11 +5,8 @@ namespace Webkul\Admin\Http\Controllers\Customer;
 use Illuminate\Support\Facades\Event;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Customer\Repositories\CustomerRepository;
-
-use Webkul\Customer\Repositories\CustomerAddressRepository;
 use Webkul\Customer\Repositories\CustomerGroupRepository;
 use Webkul\Core\Repositories\ChannelRepository;
-
 use Webkul\Admin\Mail\NewCustomerNotification;
 use Mail;
 
@@ -30,13 +27,6 @@ class CustomerController extends Controller
     protected $customerRepository;
 
     /**
-     * CustomerAddress Repository object
-     *
-     * @var \Webkul\Customer\Repositories\CustomerAddressRepository
-     */
-    protected $customerAddressRepository;
-
-    /**
      * CustomerGroupRepository object
      *
      * @var \Webkul\Customer\Repositories\CustomerGroupRepository
@@ -54,26 +44,26 @@ class CustomerController extends Controller
      * Create a new controller instance.
      *
      * @param \Webkul\Customer\Repositories\CustomerRepository  $customerRepository
-     * @param  \Webkul\Customer\Repositories\CustomerAddressRepository  $customerAddressRepository
      * @param \Webkul\Customer\Repositories\CustomerGroupRepository  $customerGroupRepository
      * @param \Webkul\Core\Repositories\ChannelRepository  $channelRepository
      */
     public function __construct(
         CustomerRepository $customerRepository,
-        CustomerAddressRepository $customerAddressRepository,
         CustomerGroupRepository $customerGroupRepository,
         ChannelRepository $channelRepository
-        )
+    )
+    {
+        $this->_config = request('_config');
 
-        {
-            $this->_config = request('_config');
-            $this->middleware('admin');
-            $this->customerRepository = $customerRepository;
+        $this->middleware('admin');
 
-            $this->customerAddressRepository = $customerAddressRepository;
-            $this->customerGroupRepository = $customerGroupRepository;
-            $this->channelRepository = $channelRepository;
-        }
+        $this->customerRepository = $customerRepository;
+
+        $this->customerGroupRepository = $customerGroupRepository;
+
+        $this->channelRepository = $channelRepository;
+
+    }
 
     /**
      * Display a listing of the resource.
@@ -151,11 +141,12 @@ class CustomerController extends Controller
     public function edit($id)
     {
         $customer = $this->customerRepository->findOrFail($id);
-        $address = $this->customerAddressRepository->find($id);
+
         $customerGroup = $this->customerGroupRepository->findWhere([['code', '<>', 'guest']]);
+
         $channelName = $this->channelRepository->all();
 
-        return view($this->_config['view'], compact('customer', 'address', 'customerGroup', 'channelName'));
+        return view($this->_config['view'], compact('customer', 'customerGroup', 'channelName'));
     }
 
     /**
@@ -200,20 +191,12 @@ class CustomerController extends Controller
         $customer = $this->customerRepository->findorFail($id);
 
         try {
-
-            if (! $this->customerRepository->checkIfCustomerHasOrderPendingOrProcessing($customer)) {
-
-                $this->customerRepository->delete($id);
-            } else {
-
-                session()->flash('error', trans('admin::app.response.order-pending', ['name' => 'Customer']));
-                return response()->json(['message' => false], 400);
-            }
+            $this->customerRepository->delete($id);
 
             session()->flash('success', trans('admin::app.response.delete-success', ['name' => 'Customer']));
+
             return response()->json(['message' => true], 200);
         } catch (\Exception $e) {
-
             session()->flash('error', trans('admin::app.response.delete-failed', ['name' => 'Customer']));
         }
 
@@ -287,18 +270,12 @@ class CustomerController extends Controller
     {
         $customerIds = explode(',', request()->input('indexes'));
 
-        if (!$this->customerRepository->checkBulkCustomerIfTheyHaveOrderPendingOrProcessing($customerIds)) {
-
-            foreach ($customerIds as $customerId) {
-                $this->customerRepository->deleteWhere(['id' => $customerId]);
-            }
-
-            session()->flash('success', trans('admin::app.customers.customers.mass-destroy-success'));
-
-            return redirect()->back();
+        foreach ($customerIds as $customerId) {
+            $this->customerRepository->deleteWhere(['id' => $customerId]);
         }
 
-        session()->flash('error', trans('admin::app.response.order-pending', ['name' => 'Customers']));
+        session()->flash('success', trans('admin::app.customers.customers.mass-destroy-success'));
+
         return redirect()->back();
     }
 }

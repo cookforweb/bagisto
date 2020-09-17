@@ -10,16 +10,16 @@ use Webkul\Core\Helpers\Laravel5Helper;
 
 class GuestCheckoutCest
 {
-    private $productNoGuestCheckout, $productGuestCheckout;
+    private $faker,
+        $productNoGuestCheckout, $productGuestCheckout;
 
     function _before(FunctionalTester $I)
     {
-        $I->useDefaultTheme();
 
-        $faker = Factory::create();
+        $this->faker = Factory::create();
 
         $pConfigDefault = [
-            'productInventory' => ['qty' => $faker->numberBetween(1, 1000)],
+            'productInventory' => ['qty' => $this->faker->numberBetween(1, 1000)],
             'attributeValues'  => [
                 'status'         => true,
                 'new'            => 1,
@@ -27,7 +27,7 @@ class GuestCheckoutCest
             ],
         ];
         $pConfigGuestCheckout = [
-            'productInventory' => ['qty' => $faker->numberBetween(1, 1000)],
+            'productInventory' => ['qty' => $this->faker->numberBetween(1, 1000)],
             'attributeValues'  => [
                 'status'         => true,
                 'new'            => 1,
@@ -59,11 +59,9 @@ class GuestCheckoutCest
         $I->assertEquals($example['globalConfig'],
             core()->getConfigData('catalog.products.guest-checkout.allow-guest-checkout'));
         $I->amOnRoute('shop.home.index');
-        $I->sendAjaxPostRequest('/checkout/cart/add/' . $product->id, [
-            '_token' => session('_token'),
-            'product_id' => $product->id,
-            'quantity' => 1
-        ]);
+        $I->see($product->name, '//div[@class="product-information"]/div[@class="product-name"]');
+        $I->click(__('shop::app.products.add-to-cart'),
+            '//form[input[@name="product_id"][@value="' . $product->id . '"]]/button');
 
         $I->amOnRoute('shop.checkout.cart.index');
         $I->see('Shopping Cart', '//div[@class="title"]');
@@ -72,8 +70,8 @@ class GuestCheckoutCest
         $I->click(__('shop::app.checkout.cart.proceed-to-checkout'),
             '//a[@href="' . route('shop.checkout.onepage.index') . '"]');
         $I->seeCurrentRouteIs($example['expectedRoute']);
-        $cart = cart()->getCart();
-        $I->assertTrue(cart()->removeItem($cart->items[0]->id));
+        $cart = Cart::getCart();
+        $I->assertTrue(Cart::removeItem($cart->items[0]->id));
     }
 
     protected function guestCheckoutProvider(): array

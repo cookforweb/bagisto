@@ -2,19 +2,17 @@
 
 namespace Webkul\BookingProduct\Type;
 
-use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Webkul\Attribute\Repositories\AttributeRepository;
-use Webkul\BookingProduct\Helpers\Booking as BookingHelper;
-use Webkul\BookingProduct\Repositories\BookingProductRepository;
-use Webkul\Checkout\Models\CartItem;
-use Webkul\Product\Datatypes\CartItemValidationResult;
-use Webkul\Product\Helpers\ProductImage;
-use Webkul\Product\Repositories\ProductAttributeValueRepository;
-use Webkul\Product\Repositories\ProductImageRepository;
-use Webkul\Product\Repositories\ProductInventoryRepository;
 use Webkul\Product\Repositories\ProductRepository;
+use Webkul\Product\Repositories\ProductAttributeValueRepository;
+use Webkul\Product\Repositories\ProductInventoryRepository;
+use Webkul\Product\Repositories\ProductImageRepository;
+use Webkul\Product\Helpers\ProductImage;
+use Webkul\BookingProduct\Repositories\BookingProductRepository;
+use Webkul\BookingProduct\Helpers\Booking as BookingHelper;
 use Webkul\Product\Type\Virtual;
+use Carbon\Carbon;
 
 class Booking extends Virtual
 {
@@ -32,9 +30,6 @@ class Booking extends Virtual
      */
     protected $bookingHelper;
 
-    /** @var bool do not allow booking products to be copied, it would be too complicated. */
-    protected $canBeCopied = false;
-
     /**
      * @var array
      */
@@ -49,11 +44,11 @@ class Booking extends Virtual
     /**
      * Create a new product type instance.
      *
-     * @param  \Webkul\Attribute\Repositories\AttributeRepository           $attributeRepository
-     * @param  \Webkul\Product\Repositories\ProductRepository               $productRepository
-     * @param  \Webkul\Product\Repositories\ProductAttributeValueRepository $attributeValueRepository
-     * @param  \Webkul\Product\Repositories\ProductInventoryRepository      $productInventoryRepository
-     * @param  \Webkul\Product\Repositories\ProductImageRepository          $productImageRepository
+     * @param  \Webkul\Attribute\Repositories\AttributeRepository  $attributeRepository
+     * @param  \Webkul\Product\Repositories\ProductRepository  $productRepository
+     * @param  \Webkul\Product\Repositories\ProductAttributeValueRepository  $attributeValueRepository
+     * @param  \Webkul\Product\Repositories\ProductInventoryRepository  $productInventoryRepository
+     * @param  \Webkul\Product\Repositories\ProductImageRepository  $productImageRepository
      * @param  \Webkul\Product\Helpers\ProductImage $productImageHelper
      * @param  \Webkul\BookingProduct\Repositories\BookingProductRepository  $bookingProductRepository
      * @param  \Webkul\BookingProduct\Helpers\BookingHelper  $bookingHelper
@@ -138,7 +133,7 @@ class Booking extends Virtual
         if (! $bookingProduct) {
             return false;
         }
-
+        
         if (in_array($bookingProduct->type, ['default', 'rental', 'table'])) {
             return true;
         }
@@ -154,16 +149,7 @@ class Booking extends Virtual
     {
         $bookingProduct = $this->getBookingProduct($this->product->id);
 
-        return app($this->bookingHelper->getTypeHelper($bookingProduct->type))->isItemHaveQuantity($cartItem);
-    }
-
-    /**
-     * @param  int  $qty
-     * @return bool
-     */
-    public function haveSufficientQuantity(int $qty): bool
-    {
-        return true;
+        return app($this->bookingHelper->getTypeHepler($bookingProduct->type))->isItemHaveQuantity($cartItem);
     }
 
     /**
@@ -185,7 +171,7 @@ class Booking extends Virtual
         if ($bookingProduct->type == 'event') {
             if (Carbon::now() > $bookingProduct->available_from && Carbon::now() > $bookingProduct->available_to) {
                 return trans('shop::app.checkout.cart.event.expired');
-            }
+            } 
 
             $filtered = Arr::where($data['booking']['qty'], function ($qty, $key) {
                 return $qty != 0;
@@ -200,21 +186,25 @@ class Booking extends Virtual
                     continue;
                 }
 
-                $data['quantity'] = $qty;
-                $data['booking']['ticket_id'] = $ticketId;
-                $cartProducts = parent::prepareForCart($data);
+                $cartProducts = parent::prepareForCart([
+                    'product_id' => $data['product_id'],
+                    'quantity'   => $qty,
+                    'booking'    => [
+                        'ticket_id' => $ticketId,
+                    ],
+                ]);
 
                 if (is_string($cartProducts)) {
                     return $cartProducts;
                 }
-
+                    
                 $products = array_merge($products, $cartProducts);
             }
         } else {
             $products = parent::prepareForCart($data);
         }
 
-        $typeHelper = app($this->bookingHelper->getTypeHelper($bookingProduct->type));
+        $typeHelper = app($this->bookingHelper->getTypeHepler($bookingProduct->type));
 
         if (! $typeHelper->isSlotAvailable($products)) {
             return trans('shop::app.checkout.cart.quantity.inventory_warning');
@@ -233,16 +223,17 @@ class Booking extends Virtual
      */
     public function compareOptions($options1, $options2)
     {
-        if ($this->product->id !== (int) $options2['product_id']) {
+        if ($this->product->id != $options2['product_id']) {
             return false;
         }
 
-        if (isset($options1['booking'], $options2['booking'])
-            && $options1['booking']['ticket_id'] === $options2['booking']['ticket_id']) {
-                return true;
+        if (isset($options1['booking']) && isset($options2['booking'])) {
+            return $options1['booking'] == $options2['booking'];
+        } elseif (! isset($options1['booking'])) {
+            return false;
+        } elseif (! isset($options2['booking'])) {
+            return false;
         }
-
-        return false;
     }
 
     /**
@@ -259,27 +250,17 @@ class Booking extends Virtual
     /**
      * Validate cart item product price
      *
-     * @param \Webkul\Checkout\Models\CartItem $item
-     *
-     * @return \Webkul\Product\Datatypes\CartItemValidationResult
+     * @param  \Webkul\Checkout\Contracts\CartItem  $item
+     * @return float
      */
-    public function validateCartItem(CartItem $item): CartItemValidationResult
+    public function validateCartItem($item)
     {
-        $result = new CartItemValidationResult();
-
-        if (parent::isCartItemInactive($item)) {
-            $result->itemIsInactive();
-
-            return $result;
-        }
-
         $bookingProduct = $this->getBookingProduct($item->product_id);
 
         if (! $bookingProduct) {
-            $result->cartIsInvalid();
-            return $result;
+            return;
         }
 
-        return app($this->bookingHelper->getTypeHelper($bookingProduct->type))->validateCartItem($item);
+        return app($this->bookingHelper->getTypeHepler($bookingProduct->type))->validateCartItem($item);
     }
 }

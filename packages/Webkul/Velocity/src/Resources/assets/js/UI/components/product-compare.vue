@@ -1,15 +1,12 @@
 <template>
-    <a
-        :title="`${addTooltip}`"
-        class="unset compare-icon text-right"
-        @click="addProductToCompare">
+    <a class="unset compare-icon text-right" @click="addProductToCompare">
         <i class="material-icons">compare_arrows</i>
     </a>
 </template>
 
 <script>
     export default {
-        props: ['slug', 'customer', 'productId', 'addTooltip'],
+        props: ['slug', 'customer', 'productId'],
 
         methods: {
             addProductToCompare: function () {

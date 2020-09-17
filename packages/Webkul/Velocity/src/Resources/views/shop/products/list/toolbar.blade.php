@@ -8,22 +8,40 @@
     <script type="text/x-template" id="toolbar-template">
         <div class="toolbar-wrapper" v-if='!isMobile()'>
             <div class="view-mode">
-                @php
-                  $viewOption = $toolbarHelper->getViewOption();
-                @endphp
-
-                <div class="rango-view-grid-container {{ $viewOption === 'grid' ? 'active' : '' }}">
-                    <a href="{{ $toolbarHelper->getModeUrl('grid') }}" class="grid-view unset">
+                @if (
+                    ! ($toolbarHelper->isModeActive('grid')
+                    || $toolbarHelper->isModeActive('list'))
+                )
+                    <div class="rango-view-grid-container active">
                         <span class="rango-view-grid fs24"></span>
-                    </a>
-                </div>
-                <div class="rango-view-list-container {{ $viewOption === 'list' ? 'active' : '' }}">
-                    <a
-                        href="{{ $toolbarHelper->getModeUrl('list') }}"
-                        class="list-view unset">
+                    </div>
+                @else
+                    @if ($toolbarHelper->isModeActive('grid'))
+                        <div class="rango-view-grid-container active">
+                            <span class="rango-view-grid fs24"></span>
+                        </div>
+                    @else
+                        <div class="rango-view-grid-container">
+                            <a href="{{ $toolbarHelper->getModeUrl('grid') }}" class="grid-view unset">
+                                <span class="rango-view-grid fs24"></span>
+                            </a>
+                        </div>
+                    @endif
+                @endif
+
+                @if ($toolbarHelper->isModeActive('list'))
+                    <div class="rango-view-list-container active">
                         <span class="rango-view-list fs24"></span>
-                    </a>
-                </div>
+                    </div>
+                @else
+                    <div class="rango-view-list-container">
+                        <a
+                            href="{{ $toolbarHelper->getModeUrl('list') }}"
+                            class="list-view unset">
+                            <span class="rango-view-list fs24"></span>
+                        </a>
+                    </div>
+                @endif
             </div>
 
             <div class="sorter">
@@ -96,17 +114,17 @@
             </div>
 
             <div class="col-4">
-                <div class="sorter" id="sort-by">
-                    <i class="material-icons">sort_by_alpha</i>
+                <a
+                    class="unset"
+                    href="{{
+                        $toolbarHelper->isOrderCurrent('name-asc')
+                        ? $toolbarHelper->getOrderUrl('name-asc')
+                        : $toolbarHelper->getOrderUrl('name-desc')
+                    }}">
 
-                    <select class="selective-div no-border" onchange="window.location.href = this.value">
-                        @foreach ($toolbarHelper->getAvailableOrders() as $key => $order)
-                            <option value="{{ $toolbarHelper->getOrderUrl($key) }}" {{ $toolbarHelper->isOrderCurrent($key) ? 'selected' : '' }}>
-                                {{ __('shop::app.products.' . $order) }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
+                    <i class="material-icons">sort_by_alpha</i>
+                    <span>{{ __('shop::app.products.sort-by') }}</span>
+                </a>
             </div>
 
             <div class="col-4">
@@ -154,7 +172,7 @@
                 methods: {
                     toggleLayeredNavigation: function ({event, actionType}) {
                         this.layeredNavigation = !this.layeredNavigation;
-                    },
+                    }
                 }
             })
         })()

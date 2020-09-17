@@ -44,7 +44,6 @@
                         navigation-enabled="hide"
                         pagination-enabled="hide"
                         id="wishlist-products-carousel"
-                        locale-direction="{{ core()->getCurrentLocale()->direction == 'rtl' ? 'rtl' : 'ltr' }}"
                         :slides-count="products.length">
 
                         <slide
@@ -122,7 +121,11 @@
                     this.$root.headerItemsCount++;
                     this.setStorageValue('wishlist_product', updatedItems);
 
-                    window.showAlert(`alert-success`, this.__('shop.general.alert.success'), `${this.__('customer.wishlist.remove-all-success')}`);
+                    window.showAlert(
+                        `alert-success`,
+                        this.__('shop.general.alert.success'),
+                        `${this.__('customer.compare.removed')}`
+                    );
                 }
             }
         });

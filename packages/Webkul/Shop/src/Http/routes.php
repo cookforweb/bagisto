@@ -18,9 +18,6 @@ Route::group(['middleware' => ['web', 'locale', 'theme', 'currency']], function 
         'view' => 'shop::search.search'
     ])->name('shop.search.index');
 
-    //Upload image for search product
-    Route::post('/upload-search-image', 'Webkul\Shop\Http\Controllers\HomeController@upload')->name('shop.image.search.upload');
-
     //Country State Selector
     Route::get('get/countries', 'Webkul\Core\Http\Controllers\CountryStateController@getCountries')->defaults('_config', [
         'view' => 'shop::test'
@@ -204,7 +201,7 @@ Route::group(['middleware' => ['web', 'locale', 'theme', 'currency']], function 
                 //Customer Profile Edit Form Store
                 Route::post('profile/edit', 'Webkul\Customer\Http\Controllers\CustomerController@update')->defaults('_config', [
                     'redirect' => 'customer.profile.index'
-                ])->name('customer.profile.store');
+                ])->name('customer.profile.edit');
 
                 //Customer Profile Delete Form Store
                 Route::post('profile/destroy', 'Webkul\Customer\Http\Controllers\CustomerController@destroy')->defaults('_config', [
@@ -228,7 +225,7 @@ Route::group(['middleware' => ['web', 'locale', 'theme', 'currency']], function 
                 Route::post('addresses/create', 'Webkul\Customer\Http\Controllers\AddressController@store')->defaults('_config', [
                     'view' => 'shop::customers.account.address.address',
                     'redirect' => 'customer.address.index'
-                ])->name('customer.address.store');
+                ])->name('customer.address.create');
 
                 //Customer Address Edit Form Show
                 Route::get('addresses/edit/{id}', 'Webkul\Customer\Http\Controllers\AddressController@edit')->defaults('_config', [
@@ -238,7 +235,7 @@ Route::group(['middleware' => ['web', 'locale', 'theme', 'currency']], function 
                 //Customer Address Edit Form Store
                 Route::put('addresses/edit/{id}', 'Webkul\Customer\Http\Controllers\AddressController@update')->defaults('_config', [
                     'redirect' => 'customer.address.index'
-                ])->name('customer.address.update');
+                ])->name('customer.address.edit');
 
                 //Customer Address Make Default
                 Route::get('addresses/default/{id}', 'Webkul\Customer\Http\Controllers\AddressController@makeDefault')->name('make.default.address');

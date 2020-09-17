@@ -1,33 +1,28 @@
 <?php
 
-namespace Tests\Functional\Customer;
-
-use Faker\Factory;
 use Webkul\Customer\Models\Customer;
 use Webkul\Customer\Models\CustomerAddress;
-use FunctionalTester;
 
 class CustomerCest
 {
     public $fields = [];
 
-    public function _before(FunctionalTester $I): void
-    {
-        $I->useDefaultTheme();
-    }
-
-    public function updateCustomerProfile(FunctionalTester $I): void
+    public function updateCustomerProfile(FunctionalTester $I)
     {
         $customer = $I->loginAsCustomer();
 
         $I->amOnPage('/');
 
         $I->click('Profile');
+
         $I->click('Edit');
+
         $I->selectOption('gender', 'Other');
+
         $I->click('Update Profile');
 
         $I->dontSeeInSource('The old password does not match.');
+
         $I->seeInSource('Profile updated successfully.');
 
         $I->seeRecord(Customer::class, [
@@ -36,10 +31,10 @@ class CustomerCest
         ]);
     }
 
-    public function updateCustomerAddress(FunctionalTester $I): void
+    public function updateCustomerAddress(FunctionalTester $I)
     {
-        // Instantiate a european faker factory to have the vat provider available
-        $faker = Factory::create('at_AT');
+        $I->wantTo('Instantiate a european faker factory to have the vat provider available');
+        $faker = Faker\Factory::create('at_AT');
 
         $formCssSelector = '#customer-address-form';
 
@@ -48,7 +43,9 @@ class CustomerCest
         $I->amOnPage('/');
 
         $I->click('Profile');
+
         $I->click('Address');
+
         $I->click('Add Address');
 
         $this->fields = [
@@ -65,7 +62,7 @@ class CustomerCest
         ];
 
         foreach ($this->fields as $key => $value) {
-            // the following fields are rendered via javascript so we ignore them:
+            // the following fields are being rendered via javascript so we ignore them:
             if (! in_array($key, [
                 'country',
                 'state',
@@ -111,7 +108,8 @@ class CustomerCest
     }
 
     /**
-     * @param FunctionalTester $I
+     * @param \FunctionalTester $I
+     * @param array             $fields
      */
     private function assertCustomerAddress(FunctionalTester $I): void
     {

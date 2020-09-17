@@ -20,11 +20,10 @@ modules:
           connection_timeout: 60
           request_timeout: 60
           log_js_errors: true
-      - Webkul\Core\Helpers\Laravel5Helper:
+      - Laravel5:
           part: ORM
           cleanup: false
           environment_file: .env
           database_seeder_class: DatabaseSeeder
           url: http://nginx
-
 step_decorators: ~

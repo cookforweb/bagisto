@@ -3,7 +3,6 @@
 namespace Webkul\Product\Type;
 
 use Webkul\Attribute\Repositories\AttributeRepository;
-use Webkul\Product\Datatypes\CartItemValidationResult;
 use Webkul\Product\Repositories\ProductRepository;
 use Webkul\Product\Repositories\ProductAttributeValueRepository;
 use Webkul\Product\Repositories\ProductInventoryRepository;
@@ -55,13 +54,6 @@ class Downloadable extends AbstractType
      * @var bool
      */
     protected $isStockable = false;
-
-    /**
-     * Show quantity box
-     *
-     * @var bool
-     */
-    protected $allowMultipleQty = false;
 
     /**
      * getProductOptions
@@ -238,21 +230,12 @@ class Downloadable extends AbstractType
     /**
      * Validate cart item product price
      *
-     * @param \Webkul\Checkout\Models\CartItem $item
-     *
-     * @return \Webkul\Product\Datatypes\CartItemValidationResult
+     * @param  \Webkul\Checkout\Contracts\CartItem  $item
+     * @return float
      */
-    public function validateCartItem(CartItem $item): CartItemValidationResult
+    public function validateCartItem($item)
     {
-        $result = new CartItemValidationResult();
-
-        if (parent::isCartItemInactive($item)) {
-            $result->itemIsInactive();
-
-            return $result;
-        }
-
-        $price = $item->product->getTypeInstance()->getFinalPrice($item->quantity);
+        $price = $item->product->getTypeInstance()->getFinalPrice();
 
         foreach ($item->product->downloadable_links as $link) {
             if (! in_array($link->id, $item->additional['links'])) {
@@ -263,7 +246,7 @@ class Downloadable extends AbstractType
         }
 
         if ($price == $item->base_price) {
-            return $result;
+            return;
         }
 
         $item->base_price = $price;
@@ -273,7 +256,5 @@ class Downloadable extends AbstractType
         $item->total = core()->convertPrice($price * $item->quantity);
 
         $item->save();
-
-        return $result;
     }
 }

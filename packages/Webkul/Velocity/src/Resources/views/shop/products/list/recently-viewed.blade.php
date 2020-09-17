@@ -2,12 +2,8 @@
 @inject ('productRatingHelper', 'Webkul\Product\Helpers\Review')
 @inject ('productImageHelper', 'Webkul\Product\Helpers\ProductImage')
 
-@php
-    $direction = core()->getCurrentLocale()->direction;
-@endphp
-
 <recently-viewed
-    add-class="{{ isset($addClass) ? $addClass . " $direction": '' }}"
+    add-class="{{ isset($addClass) ? $addClass : '' }}"
     quantity="{{ isset($quantity) ? $quantity : null }}"
     add-class-wrapper="{{ isset($addClassWrapper) ? $addClassWrapper : '' }}">
 </recently-viewed>
@@ -33,7 +29,7 @@
                         </a>
                     </div>
 
-                    <div class="col-8 no-padding card-body align-vertical-top" v-if="product.urlKey">
+                    <div class="col-8 no-padding card-body align-vertical-top" v-if="product.name">
                         <a :href="`${baseUrl}/${product.urlKey}`" class="unset no-padding">
                             <div class="product-name">
                                 <span class="fs16 text-nowrap">@{{ product.name }}</span>

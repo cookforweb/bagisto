@@ -71,8 +71,7 @@ return [
         'no-results' => 'لا توجد نتائج',
         'page-title' => 'بحث',
         'found-results' => 'تم العثور على نتائج البحث',
-        'found-result' => 'تم العثور على نتيجة البحث',
-        'analysed-keywords' => 'Analysed Keywords'
+        'found-result' => 'تم العثور على نتيجة البحث'
     ],
 
     'reviews' => [
@@ -92,19 +91,6 @@ return [
     ],
 
     'customer' => [
-        'compare' => [
-            'text' => 'قارن',
-            'compare_similar_items' => 'مقارنة العناصر المماثلة',
-            'add-tooltip' => 'إضافة منتج لقائمة المقارنة',
-            'added' => 'تمت إضافة العنصر بنجاح لمقارنة القائمة',
-            'removed' => 'تمت إزالة العنصر بنجاح من قائمة المقارنة',
-            'removed-all' => 'تمت إزالة جميع العناصر بنجاح من قائمة المقارنة',
-            'already_added' => 'تمت إضافة العنصر بالفعل لمقارنة القائمة',
-            'empty-text' => "ليس لديك أي عناصر في قائمة المقارنة الخاصة بك",
-            'product_image' => 'Product Image',
-            'actions' => 'Actions',
-        ],
-
         'signup-text' => [
             'account_exists' => 'لديك حساب؟',
             'title' => 'تسجيل الدخول'
@@ -176,11 +162,6 @@ return [
         'account' => [
             'dashboard' => 'الملف الشخصي',
             'menu' => 'القائمة',
-
-            'general' => [
-                'no' => 'لا',
-                'yes' => 'نعم',
-            ],
 
             'profile' => [
                 'index' => [
@@ -331,10 +312,7 @@ return [
                     'refunds' => 'المسترجع',
                     'individual-refund' => '#:refund_id مسترجع',
                     'adjustment-refund' => 'تعديلات عملية الإسترجاع',
-                    'adjustment-fee' => 'تكلفة تعديلات عملية الإسترجاع',
-                    'cancel-confirm-msg' => 'هل أنت متأكد من أنك تريد إلغاء هذا الطلب ؟',
-                    'tracking-number' => 'Tracking Number',
-                    'cancel-confirm-msg' => 'هل أنت متأكد أنك تريد إلغاء هذا الطلب ?'
+                    'adjustment-fee' => 'تكلفة تعديلات عملية الإسترجاع'
                 ]
             ],
 
@@ -347,8 +325,6 @@ return [
                 'error' => 'لا يمكن إضافة المنتج إلى قائمة الأمنيات ، الرجاء المحاولة لاحقا',
                 'add' => 'تم إضافة العنصر بنجاح إلى قائمة الأمنيات',
                 'remove' => 'تم حذف العنصر بنجاح من قائمة الأمنيات',
-                'add-wishlist-text' => 'إضافة منتج إلى قائمة الأمنيات',
-                'remove-wishlist-text' => 'أزل المنتج من قائمة الأمنيات',
                 'moved' => 'تم نقل البند بنجاح إلى قائمة الأمنيات',
                 'option-missing' => 'خيارات المنتج مفقودة ، لذلك لا يمكن نقل العنصر إلى قائمة الرغبات.',
                 'move-error' => 'لا يمكن نقل العنصر إلى قائمة الأمنيات ، رجاء حاول مرة أخرى لاحقا',
@@ -392,7 +368,6 @@ return [
         'layered-nav-title' => 'المنتجات',
         'price-label' => 'أقل من',
         'remove-filter-link-title' => 'امسح الكل',
-        'filter-to' => 'to',
         'sort-by' => 'افرز حسب',
         'from-a-z' => 'من a-z',
         'from-z-a' => 'من ز-أ',
@@ -417,7 +392,6 @@ return [
         'new' => 'جديد',
         'empty' => 'لا توجد منتجات متاحة في هذه الفئة',
         'add-to-cart' => 'أضف إلى العربة',
-        'book-now' => 'احجز الآن',
         'buy-now' => 'اشتر الآن',
         'whoops' => 'خطأ!',
         'quantity' => 'الكمية',
@@ -437,9 +411,7 @@ return [
         'your-customization' => 'التخصيص الخاص بك',
         'total-amount' => 'المبلغ الإجمالي',
         'none' => 'لا شيء',
-        'available-for-order' => 'متوفر لطلب الشراء',
-        'settings' => 'Settings',
-        'compare_options' => 'Compare Options',
+        'available' => 'Available',
     ],
 
     // 'reviews' => [
@@ -484,8 +456,6 @@ return [
                 'success' => 'تم بنجاح إضافة العنصر إلى العربة',
                 'success-remove' => 'تم إزالة العنصر بنجاح من العربة',
                 'error-add' => 'لا يمكن إضافة العنصر إلى العربة ، رجاء حاول مرة أخرى ',
-                'inactive' => 'An item is inactive and was removed from cart',
-                'inactive-add' => 'Inactive item cannot be added to cart',
             ],
             'quantity-error' => 'الكمية المطلوبة غير متوفرة',
             'cart-subtotal' => 'المجموع الفرعي للمشتريات',
@@ -503,7 +473,6 @@ return [
             'shipping' => 'الشحن',
             'payment' => 'الدفع',
             'complete' => 'اكتمل',
-            'review' => 'مراجعة',
             'billing-address' => 'عنوان الفواتير',
             'sign-in' => 'تسجيل الدخول',
             'first-name' => 'الاسم الأول',
@@ -601,15 +570,6 @@ return [
             'final-summary' => 'شكرا لإظهارك إهتمامك بمتجرنا سنرسل لك رقم التتبع بمجرد شحنه',
             'help' => ': support_email إذا كنت بحاجة إلى أي نوع من المساعدة يرجى الاتصال بنا على',
             'thanks' => 'شكرا!',
-
-            'comment' => [
-                'subject' => '#:order_id تمت إضافة تعليق جديد إلى طلبك',
-                'dear' => ':customer_name العزيز',
-                'final-summary' => 'شكرا لإظهار اهتمامك بمتجرنا',
-                'help' => ':support_email إذا كنت بحاجة إلى أي نوع من المساعدة يرجى الاتصال بنا على',
-                'thanks' => 'شكر!',
-            ],
-
             'cancel' => [
                 'subject' => 'تأكيد إلغاء الأمر',
                 'heading' => 'تم الغاء الأمر او الطلب',
@@ -663,13 +623,6 @@ return [
             'info' => 'أنت تستلم هذا البريد الإلكتروني لأننا تلقينا طلب إعادة ضبط كلمة الدخول لحسابك',
             'reset-password' => 'أعد ضبط كلمة الدخول',
             'final-summary' => 'إذا لم تطلب إعادة تعيين كلمة الدخول ، لا إجراء آخر مطلوب',
-            'thanks' => 'شكرا!'
-        ],
-
-        'update-password' => [
-            'subject' => 'تم تحديث كلمة السر',
-            'dear' => ':name عزيزي',
-            'info' => 'أنت تتلقى هذا البريد الإلكتروني لأنك قمت بتحديث كلمة المرور الخاصة بك.',
             'thanks' => 'شكرا!'
         ],
 

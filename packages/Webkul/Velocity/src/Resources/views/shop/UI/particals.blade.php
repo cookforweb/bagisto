@@ -1,9 +1,3 @@
-<style>
-    .camera-icon {
-        background-image: url("{{ asset('/vendor/webkul/ui/assets/images/Camera.svg') }}");
-    }
-</style>
-
 <script type="text/x-template" id="cart-btn-template">
     <button
         type="button"
@@ -64,7 +58,7 @@
 
 <script type="text/x-template" id="searchbar-template">
     <div class="row no-margin right searchbar">
-        <div class="col-lg-5 col-md-12 no-padding input-group">
+        <div class="col-lg-6 col-md-12 no-padding input-group">
             <form
                 method="GET"
                 role="search"
@@ -109,10 +103,8 @@
                                 name="term"
                                 type="search"
                                 class="form-control"
-                                placeholder="{{ __('velocity::app.header.search-text') }}"
-                                :value="searchedQuery.term ? searchedQuery.term.split('+').join(' ') : ''" />
-
-                            <image-search-component></image-search-component>
+                                :value="searchedQuery.term ? searchedQuery.term.split('+').join(' ') : ''"
+                                placeholder="{{ __('velocity::app.header.search-text') }}" />
 
                             <button class="btn" type="submit" id="header-search-icon">
                                 <i class="fs16 fw6 rango-search"></i>
@@ -124,35 +116,29 @@
             </form>
         </div>
 
-        <div class="col-lg-7 col-md-12">
+        <div class="col-6">
             {!! view_render_event('bagisto.shop.layout.header.cart-item.before') !!}
                 @include('shop::checkout.cart.mini-cart')
             {!! view_render_event('bagisto.shop.layout.header.cart-item.after') !!}
 
-            @php
-                $showCompare = core()->getConfigData('general.content.shop.compare_option') == "1" ? true : false
-            @endphp
-
             {!! view_render_event('bagisto.shop.layout.header.compare.before') !!}
-                @if ($showCompare)
-                    <a
-                        class="compare-btn unset"
-                        @auth('customer')
-                            href="{{ route('velocity.customer.product.compare') }}"
-                        @endauth
+                <a
+                    class="compare-btn unset"
+                    @auth('customer')
+                        href="{{ route('velocity.customer.product.compare') }}"
+                    @endauth
 
-                        @guest('customer')
-                            href="{{ route('velocity.product.compare') }}"
-                        @endguest
-                        >
+                    @guest('customer')
+                        href="{{ route('velocity.product.compare') }}"
+                    @endguest
+                    >
 
-                        <i class="material-icons">compare_arrows</i>
-                        <div class="badge-container" v-if="compareCount > 0">
-                            <span class="badge" v-text="compareCount"></span>
-                        </div>
-                        <span>{{ __('velocity::app.customer.compare.text') }}</span>
-                    </a>
-                @endif
+                    <i class="material-icons">compare_arrows</i>
+                    <div class="badge-container" v-if="compareCount > 0">
+                        <span class="badge" v-text="compareCount"></span>
+                    </div>
+                    <span>{{ __('velocity::app.customer.compare.text') }}</span>
+                </a>
             {!! view_render_event('bagisto.shop.layout.header.compare.after') !!}
 
             {!! view_render_event('bagisto.shop.layout.header.wishlist.before') !!}
@@ -168,26 +154,13 @@
     </div>
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+<script type="text/x-template" id="sidebar-categories-template">
+    <div class="wrapper" v-if="rootCategories">
+        Hello World
+    </div>
 
-<script type="text/x-template" id="image-search-component-template">
-    <div class="d-inline-block">
-        <label class="image-search-container" for="image-search-container">
-            <i class="icon camera-icon"></i>
-
-            <input
-                type="file"
-                class="d-none"
-                ref="image_search_input"
-                id="image-search-container"
-                v-on:change="uploadImage()" />
-
-            <img
-                class="d-none"
-                id="uploaded-image-url"
-                :src="uploadedImageUrl" />
-        </label>
+    <div class="wrapper" v-else-if="subCategory">
+        Hello World 2
     </div>
 </script>
 
@@ -308,12 +281,8 @@
 
                 searchedItem.forEach(item => {
                     let splitedItem = item.split('=');
-                    updatedSearchedCollection[splitedItem[0]] = decodeURI(splitedItem[1]);
+                    updatedSearchedCollection[splitedItem[0]] = splitedItem[1];
                 });
-
-                if (updatedSearchedCollection['image-search'] == 1) {
-                    updatedSearchedCollection.term = '';
-                }
 
                 this.searchedQuery = updatedSearchedCollection;
 
@@ -346,100 +315,6 @@
                             .catch(exception => {
                                 console.log(this.__('error.something_went_wrong'));
                             });
-                    }
-                }
-            }
-        });
-
-        Vue.component('image-search-component', {
-            template: '#image-search-component-template',
-            data: function() {
-                return {
-                    uploadedImageUrl: ''
-                }
-            },
-
-            methods: {
-                uploadImage: function() {
-                    var imageInput = this.$refs.image_search_input;
-
-                    if (imageInput.files && imageInput.files[0]) {
-                        if (imageInput.files[0].type.includes('image/')) {
-                            this.$root.showLoader();
-
-                            var formData = new FormData();
-
-                            formData.append('image', imageInput.files[0]);
-
-                            axios.post(
-                                "{{ route('shop.image.search.upload') }}",
-                                formData,
-                                {
-                                    headers: {
-                                        'Content-Type': 'multipart/form-data'
-                                    }
-                                }
-                            ).then(response => {
-                                var net;
-                                var self = this;
-                                this.uploadedImageUrl = response.data;
-
-
-                                async function app() {
-                                    var analysedResult = [];
-
-                                    var queryString = '';
-
-                                    net = await mobilenet.load();
-
-                                    const imgElement = document.getElementById('uploaded-image-url');
-
-                                    try {
-                                        const result = await net.classify(imgElement);
-
-                                        result.forEach(function(value) {
-                                            queryString = value.className.split(',');
-
-                                            if (queryString.length > 1) {
-                                                analysedResult = analysedResult.concat(queryString)
-                                            } else {
-                                                analysedResult.push(queryString[0])
-                                            }
-                                        });
-                                    } catch (error) {
-                                        self.$root.hideLoader();
-
-                                        window.showAlert(
-                                            `alert-danger`,
-                                            this.__('shop.general.alert.error'),
-                                            "{{ __('shop::app.common.error') }}"
-                                        );
-                                    }
-
-                                    localStorage.searchedImageUrl = self.uploadedImageUrl;
-
-                                    queryString = localStorage.searched_terms = analysedResult.join('_');
-
-                                    self.$root.hideLoader();
-
-                                    window.location.href = "{{ route('shop.search.index') }}" + '?term=' + queryString + '&image-search=1';
-                                }
-
-                                app();
-                            }).catch(() => {
-                                this.$root.hideLoader();
-
-                                window.showAlert(
-                                    `alert-danger`,
-                                    this.__('shop.general.alert.error'),
-                                    "{{ __('shop::app.common.error') }}"
-                                );
-                            });
-                        } else {
-                            imageInput.value = '';
-
-                            alert('Only images (.jpeg, .jpg, .png, ..) are allowed.');
-                        }
                     }
                 }
             }

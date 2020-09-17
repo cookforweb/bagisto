@@ -36,10 +36,6 @@
                     </div>
 
                     <div>
-                        {{ $order->shipping_address->company_name ?? '' }}
-                    </div>
-
-                    <div>
                         {{ $order->shipping_address->name }}
                     </div>
 
@@ -73,10 +69,6 @@
                 </div>
 
                 <div>
-                    {{ $order->billing_address->company_name ?? '' }}
-                </div>
-
-                <div>
                     {{ $order->billing_address->name }}
                 </div>
 
@@ -98,18 +90,9 @@
                     {{ __('shop::app.mail.order.payment') }}
                 </div>
 
-                <div style="font-weight: bold; font-size: 16px; color: #242424; margin-bottom: 20px;">
+                <div style="font-weight: bold;font-size: 16px; color: #242424;">
                     {{ core()->getConfigData('sales.paymentmethods.' . $order->payment->method . '.title') }}
                 </div>
-
-                @php $additionalDetails = \Webkul\Payment\Payment::getAdditionalDetails($order->payment->method); @endphp
-
-                @if (! empty($additionalDetails))
-                    <div style="font-size: 16px; color: #242424;">
-                        <div>{{ $additionalDetails['title'] }}</div>
-                        <div>{{ $additionalDetails['value'] }}</div>
-                    </div>
-                @endif
             </div>
         </div>
 
@@ -174,12 +157,12 @@
             @endif
 
             @foreach (Webkul\Tax\Helpers\Tax::getTaxRatesWithAmount($order, false) as $taxRate => $taxAmount )
-                <div>
-                    <span id="taxrate-{{ core()->taxRateAsIdentifier($taxRate) }}">{{ __('shop::app.mail.order.tax') }} {{ $taxRate }} %</span>
-                    <span id="taxamount-{{ core()->taxRateAsIdentifier($taxRate) }}" style="float: right;">
-                        {{ core()->formatPrice($taxAmount, $order->order_currency_code) }}
-                    </span>
-                </div>
+            <div>
+                <span id="taxrate-{{ core()->taxRateAsIdentifier($taxRate) }}">{{ __('shop::app.mail.order.tax') }} {{ $taxRate }} %</span>
+                <span id="taxamount-{{ core()->taxRateAsIdentifier($taxRate) }}" style="float: right;">
+                    {{ core()->formatPrice($taxAmount, $order->order_currency_code) }}
+                </span>
+            </div>
             @endforeach
 
             @if ($order->discount_amount > 0)

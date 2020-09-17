@@ -10,7 +10,6 @@
 
     <a
         v-else
-        :title="`${isActive ? addTooltip : removeTooltip}`"
         @click="toggleProductWishlist(productId)"
         :class="`unset wishlist-icon ${addClass ? addClass : ''} text-right`">
 
@@ -38,8 +37,6 @@
             'isCustomer',
             'productSlug',
             'moveToWishlist',
-            'addTooltip',
-            'removeTooltip'
         ],
 
         data: function () {

@@ -3,6 +3,9 @@
 namespace Webkul\Admin\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Webkul\Admin\Providers\EventServiceProvider;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Webkul\Admin\Exceptions\Handler;
 use Webkul\Core\Tree;
 
 class AdminServiceProvider extends ServiceProvider
@@ -17,7 +20,6 @@ class AdminServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__ . '/../Http/routes.php');
 
         $this->loadTranslationsFrom(__DIR__ . '/../Resources/lang', 'admin');
-        $this->publishes([__DIR__.'/../Resources/lang' => resource_path('lang/vendor/webkul/admin')]);
 
         $this->publishes([
             __DIR__ . '/../../publishable/assets' => public_path('vendor/webkul/admin/assets'),
@@ -30,6 +32,11 @@ class AdminServiceProvider extends ServiceProvider
         $this->registerACL();
 
         $this->app->register(EventServiceProvider::class);
+
+        $this->app->bind(
+            ExceptionHandler::class,
+            Handler::class
+        );
     }
 
     /**
@@ -89,7 +96,7 @@ class AdminServiceProvider extends ServiceProvider
         view()->composer(['admin::users.roles.create', 'admin::users.roles.edit'], function ($view) {
             $view->with('acl', $this->createACL());
         });
-
+        
         view()->composer(['admin::catalog.products.create'], function ($view) {
             $items = array();
 

@@ -6,10 +6,8 @@
     <a
         @if ($wishListHelper->getWishlistProduct($product))
             class="add-to-wishlist already"
-            title="{{ __('shop::app.customer.account.wishlist.remove-wishlist-text') }}"
         @else
             class="add-to-wishlist"
-            title="{{ __('shop::app.customer.account.wishlist.add-wishlist-text') }}"
         @endif
         id="wishlist-changer"
         style="margin-right: 15px;"

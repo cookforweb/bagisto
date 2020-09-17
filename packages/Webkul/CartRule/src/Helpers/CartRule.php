@@ -3,7 +3,6 @@
 namespace Webkul\CartRule\Helpers;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
 use Webkul\CartRule\Repositories\CartRuleRepository;
 use Webkul\CartRule\Repositories\CartRuleCouponRepository;
 use Webkul\CartRule\Repositories\CartRuleCouponUsageRepository;
@@ -125,9 +124,7 @@ class CartRule
 
         $this->processFreeShippingDiscount($cart);
 
-        if (! $this->checkCouponCode()) {
-            cart()->removeCouponCode();
-        }
+        $this->validateCouponCode();
     }
 
     /**
@@ -137,16 +134,11 @@ class CartRule
      */
     public function getCartRules()
     {
-        $staticCartRules = new class() {
-            public static $cartRules;
-            public static $cartID;
-        };
+        static $cartRules;
 
-        if ($staticCartRules::$cartID === cart()->getCart()->id && $staticCartRules::$cartRules) {
-            return $staticCartRules::$cartRules;
+        if ($cartRules) {
+            return $cartRules;
         }
-
-        $staticCartRules::$cartID = cart()->getCart()->id;
 
         $customerGroupId = null;
 
@@ -158,30 +150,43 @@ class CartRule
             }
         }
 
-        $cartRules = $this->getCartRuleQuery($customerGroupId, core()->getCurrentChannel()->id);
+        $cartRules = $this->cartRuleRepository->scopeQuery(function ($query) use ($customerGroupId) {
+            return $query->leftJoin('cart_rule_customer_groups', 'cart_rules.id', '=', 'cart_rule_customer_groups.cart_rule_id')
+                         ->leftJoin('cart_rule_channels', 'cart_rules.id', '=', 'cart_rule_channels.cart_rule_id')
+                         ->where('cart_rule_customer_groups.customer_group_id', $customerGroupId)
+                         ->where('cart_rule_channels.channel_id', core()->getCurrentChannel()->id)
+                         ->where(function ($query1) {
+                             $query1->where('cart_rules.starts_from', '<=', Carbon::now()->format('Y-m-d'))
+                                 ->orWhereNull('cart_rules.starts_from');
+                         })
+                         ->where(function ($query2) {
+                             $query2->where('cart_rules.ends_till', '>=', Carbon::now()->format('Y-m-d'))
+                                 ->orWhereNull('cart_rules.ends_till');
+                         })
+                         ->orderBy('sort_order', 'asc');
+        })->findWhere(['status' => 1]);
 
-        $staticCartRules::$cartRules = $cartRules;
         return $cartRules;
     }
 
     /**
      * Check if cart rule can be applied
      *
-     * @param                                     $cart
-     * @param \Webkul\CartRule\Contracts\CartRule $rule
-     *
+     * @param  \Webkul\CartRule\Contracts\CartRule  $rule
      * @return bool
      */
-    public function canProcessRule($cart, $rule): bool
+    public function canProcessRule($rule): bool
     {
+        $cart = Cart::getCart();
+
         if ($rule->coupon_type) {
             if (strlen($cart->coupon_code)) {
-                /** @var \Webkul\CartRule\Models\CartRule $rule */
-                // Laravel relation is used instead of repository for performance
-                // reasons (cart_rule_coupon-relation is pre-loaded by self::getCartRuleQuery())
-                $coupon = $rule->cart_rule_coupon->where('code', $cart->coupon_code)->first();
+                $coupon = $this->cartRuleCouponRepository->findOneWhere([
+                    'cart_rule_id' => $rule->id,
+                    'code'         => $cart->coupon_code,
+                ]);
 
-                if ($coupon && $coupon->code === $cart->coupon_code) {
+                if ($coupon) {
                     if ($coupon->usage_limit && $coupon->times_used >= $coupon->usage_limit) {
                         return false;
                     }
@@ -232,19 +237,13 @@ class CartRule
 
         $appliedRuleIds = [];
 
-        $cart = Cart::getCart();
-
-        foreach ($rules = $this->getCartRules() as $rule) {
-            if (! $this->canProcessRule($cart, $rule)) {
+        foreach ($this->getCartRules() as $rule) {
+            if (! $this->canProcessRule($rule)) {
                 continue;
             }
 
             if (! $this->validator->validate($rule, $item)) {
                 continue;
-            }
-
-            if ($rule->coupon_code) {
-                $item->coupon_code = $rule->coupon_code;
             }
 
             $quantity = $rule->discount_quantity ? min($item->quantity, $rule->discount_quantity) : $item->quantity;
@@ -255,9 +254,9 @@ class CartRule
                 case 'by_percent':
                     $rulePercent = min(100, $rule->discount_amount);
 
-                    $discountAmount = ($quantity * $item->price + $item->tax_amount - $item->discount_amount) * ($rulePercent / 100);
+                    $discountAmount = ($quantity * $item->price - $item->discount_amount) * ($rulePercent / 100);
 
-                    $baseDiscountAmount = ($quantity * $item->base_price + $item->base_tax_amount - $item->base_discount_amount) * ($rulePercent / 100);
+                    $baseDiscountAmount = ($quantity * $item->base_price - $item->base_discount_amount) * ($rulePercent / 100);
 
                     if (! $rule->discount_quantity || $rule->discount_quantity > $quantity) {
                         $discountPercent = min(100, $item->discount_percent + $rulePercent);
@@ -275,23 +274,19 @@ class CartRule
                     break;
 
                 case 'cart_fixed':
-                    // if ($this->itemTotals[$rule->id]['total_items'] <= 1) {
-                    //     $discountAmount = core()->convertPrice($rule->discount_amount);
+                    if ($this->itemTotals[$rule->id]['total_items'] <= 1) {
+                        $discountAmount = core()->convertPrice($rule->discount_amount);
 
-                    //     $baseDiscountAmount = min($item->base_price * $quantity, $rule->discount_amount);
-                    // } else {
-                    //     $discountRate = $item->base_price * $quantity / $this->itemTotals[$rule->id]['base_total_price'];
+                        $baseDiscountAmount = min($item->base_price * $quantity, $rule->discount_amount);
+                    } else {
+                        $discountRate = $item->base_price * $quantity / $this->itemTotals[$rule->id]['base_total_price'];
 
-                    //     $maxDiscount = $rule->discount_amount * $discountRate;
+                        $maxDiscount = $rule->discount_amount * $discountRate;
 
-                    //     $discountAmount = core()->convertPrice($maxDiscount);
+                        $discountAmount = core()->convertPrice($maxDiscount);
 
-                    //     $baseDiscountAmount = min($item->base_price * $quantity, $maxDiscount);
-                    // }
-
-                    $discountAmount = core()->convertPrice($rule->discount_amount);
-
-                    $baseDiscountAmount = min($item->base_price * $quantity, $rule->discount_amount);
+                        $baseDiscountAmount = min($item->base_price * $quantity, $maxDiscount);
+                    }
 
                     $discountAmount = min($item->price * $quantity, $discountAmount);
 
@@ -321,14 +316,8 @@ class CartRule
                     break;
             }
 
-            $item->discount_amount = min(
-                $item->discount_amount + $discountAmount,
-                $item->price * $quantity + $item->tax_amount
-            );
-            $item->base_discount_amount = min(
-                $item->base_discount_amount + $baseDiscountAmount,
-                $item->base_price * $quantity + $item->base_tax_amount
-            );
+            $item->discount_amount = min($item->discount_amount + $discountAmount, $item->price * $quantity + $item->tax_amount);
+            $item->base_discount_amount = min($item->base_discount_amount + $baseDiscountAmount, $item->base_price * $quantity + $item->base_tax_amount);
 
             $appliedRuleIds[$rule->id] = $rule->id;
 
@@ -361,10 +350,8 @@ class CartRule
 
         $appliedRuleIds = [];
 
-        $cart = Cart::getCart();
-
         foreach ($this->getCartRules() as $rule) {
-            if (! $this->canProcessRule($cart, $rule)) {
+            if (! $this->canProcessRule($rule)) {
                 continue;
             }
 
@@ -445,36 +432,29 @@ class CartRule
 
         $appliedRuleIds = [];
 
-        $cart = Cart::getCart();
+        foreach ($this->getCartRules() as $rule) {
+            if (! $this->canProcessRule($rule)) {
+                continue;
+            }
 
-        foreach ($cart->items->all() as $item) {
+            if (! $this->validator->validate($rule, $cart)) {
+                continue;
+            }
 
-            foreach ($this->getCartRules() as $rule) {
+            if (! $rule || ! $rule->free_shipping) {
+                continue;
+            }
 
-                if (! $this->canProcessRule($cart, $rule)) {
-                    continue;
-                }
+            $selectedShipping->price = 0;
 
-                /* given CartItem instance to the validator */
-                if (! $this->validator->validate($rule, $item)) {
-                    continue;
-                }
+            $selectedShipping->base_price = 0;
 
-                if (! $rule || ! $rule->free_shipping) {
-                    continue;
-                }
+            $selectedShipping->save();
 
-                $selectedShipping->price = 0;
+            $appliedRuleIds[$rule->id] = $rule->id;
 
-                $selectedShipping->base_price = 0;
-
-                $selectedShipping->save();
-
-                $appliedRuleIds[$rule->id] = $rule->id;
-
-                if ($rule->end_other_rules) {
-                    break;
-                }
+            if ($rule->end_other_rules) {
+                break;
             }
         }
 
@@ -497,14 +477,12 @@ class CartRule
      */
     public function calculateCartItemTotals($items)
     {
-        $cart = Cart::getCart();
-
         foreach ($this->getCartRules() as $rule) {
             if ($rule->action_type == 'cart_fixed') {
                 $totalPrice = $totalBasePrice = $validCount = 0;
 
                 foreach ($items as $item) {
-                    if (! $this->canProcessRule($cart, $rule)) {
+                    if (! $this->canProcessRule($rule, $item)) {
                         continue;
                     }
 
@@ -524,26 +502,23 @@ class CartRule
     }
 
     /**
-     * Check if coupon code is applied or not
+     * Check if coupon code is valid or not, if not remove from cart
      *
-     * @return bool
+     * @return void
      */
-    public function checkCouponCode(): bool
+    public function validateCouponCode()
     {
-        $cart = cart()->getCart();
+        $cart = Cart::getCart();
 
         if (! $cart->coupon_code) {
-            return true;
+            return;
         }
 
-        $coupons = $this->cartRuleCouponRepository->where(['code' => $cart->coupon_code])->get();
-        foreach ($coupons as $coupon) {
-            if (in_array($coupon->cart_rule_id, explode(',', $cart->applied_cart_rule_ids))) {
-                return true;
-            }
-        }
+        $coupon = $this->cartRuleCouponRepository->findOneByField('code', $cart->coupon_code);
 
-        return false;
+        if (! $coupon || ! in_array($coupon->cart_rule_id, explode(',', $cart->applied_cart_rule_ids))) {
+            Cart::removeCouponCode();
+        }
     }
 
     /**
@@ -568,39 +543,4 @@ class CartRule
             }
         }
     }
-
-    /**
-     * @param $customerGroupId
-     * @param $channelId
-     *
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function getCartRuleQuery($customerGroupId, $channelId): \Illuminate\Database\Eloquent\Collection
-    {
-        return $this->cartRuleRepository->scopeQuery(function ($query) use ($customerGroupId, $channelId) {
-            /** @var Builder $query */
-            return $query->leftJoin('cart_rule_customer_groups', 'cart_rules.id', '=',
-                'cart_rule_customer_groups.cart_rule_id')
-                ->leftJoin('cart_rule_channels', 'cart_rules.id', '=', 'cart_rule_channels.cart_rule_id')
-                ->where('cart_rule_customer_groups.customer_group_id', $customerGroupId)
-                ->where('cart_rule_channels.channel_id', $channelId)
-                ->where(function ($query1) {
-                    /** @var Builder $query1 */
-                    $query1->where('cart_rules.starts_from', '<=', Carbon::now()->format('Y-m-d'))
-                        ->orWhereNull('cart_rules.starts_from');
-                })
-                ->where(function ($query2) {
-                    /** @var Builder $query2 */
-                    $query2->where('cart_rules.ends_till', '>=', Carbon::now()->format('Y-m-d'))
-                        ->orWhereNull('cart_rules.ends_till');
-                })
-                ->with([
-                    'cart_rule_customer_groups',
-                    'cart_rule_channels',
-                    'cart_rule_coupon'
-                ])
-                ->orderBy('sort_order', 'asc');
-        })->findWhere(['status' => 1]);
-    }
-
 }

@@ -4,7 +4,6 @@
 
 use Faker\Generator as Faker;
 use Webkul\Customer\Models\Customer;
-use Illuminate\Support\Arr;
 use Webkul\Customer\Models\CustomerAddress;
 
 $factory->define(CustomerAddress::class, function (Faker $faker) {
@@ -25,7 +24,7 @@ $factory->define(CustomerAddress::class, function (Faker $faker) {
         'city'            => $faker->city,
         'postcode'        => $faker->postcode,
         'phone'           => $faker->e164PhoneNumber,
-        'default_address' => Arr::random([0, 1]),
+        'default_address' => array_random([0, 1]),
         'address_type'    => CustomerAddress::ADDRESS_TYPE,
     ];
 });

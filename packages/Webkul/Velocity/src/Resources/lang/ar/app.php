@@ -97,7 +97,6 @@ return [
             'footer-left-content' => 'تذييل يسار المحتوى',
             'subscription-content' => 'محتوى شريط الاشتراك',
             'sidebar-categories' => 'فئات الشريط الجانبي',
-            'header_content_count' => 'Header Content Count',
             'footer-left-raw-content' => '<p>نحن نحب صياغة البرامج وحل مشاكل العالم الحقيقي مع الثنائيات. نحن ملتزمون للغاية بأهدافنا. نحن نستثمر مواردنا لإنشاء برامج وتطبيقات سهلة الاستخدام على مستوى عالمي للأعمال التجارية مع أرفع مستوى ، على أعلى مستوى من الخبرة التقنية.</p>',
             'slider-path' => 'مسار المنزلق',
             'category-logo' => 'شعار الفئة',
@@ -195,14 +194,10 @@ return [
         'compare' => [
             'text' => 'قارن',
             'compare_similar_items' => 'مقارنة العناصر المماثلة',
-            'add-tooltip' => 'إضافة منتج لقائمة المقارنة',
             'added' => 'تمت إضافة العنصر بنجاح لمقارنة القائمة',
             'removed' => 'تمت إزالة العنصر بنجاح من قائمة المقارنة',
-            'removed-all' => 'تمت إزالة كافة العناصر بنجاح من قائمة المقارنة',
             'already_added' => 'تمت إضافة العنصر بالفعل لمقارنة القائمة',
             'empty-text' => "ليس لديك أي عناصر في قائمة المقارنة الخاصة بك",
-            'product_image' => 'Product Image',
-            'actions' => 'Actions',
         ],
         'login-form' => [
             'sign-up' => 'سجل',
@@ -223,10 +218,7 @@ return [
             'forgot-password' => 'هل نسيت كلمة المرور',
             'recover-password' => 'إستعادة كلمة المرور',
             'recover-password-text' => '.إذا نسيت كلمة المرور ، فاستردها بإدخال عنوان بريدك الإلكتروني',
-        ],
-        'wishlist' => [
-            'remove-all-success' => 'تمت إزالة جميع العناصر من قائمة الرغبات الخاصة بك',
-        ],
+        ]
     ],
 
     'error' => [
@@ -268,14 +260,11 @@ return [
             'view' => 'رأي',
             'filter' => 'منقي',
             'update' => 'تحديث',
-            'download' => 'تحميل',
             'addresses' => 'عناوين',
-            'reviews' => 'التعليقات',
             'orders' => 'الطلب #٪ s',
-            'currencies' => 'Currencies',
+            'reviews' => 'التعليقات',
             'top-brands' => 'ارقى الماركات',
             'new-password' => 'كلمة مرور جديدة',
-            'no-file-available' => 'لا يوجد ملف متاح!',
             'downloadables' => 'المنتجات القابلة للتحميل',
             'confirm-new-password' => 'تأكيد كلمة المرور الجديدة',
             'enter-current-password' => 'أدخل كلمة المرور الحالية',

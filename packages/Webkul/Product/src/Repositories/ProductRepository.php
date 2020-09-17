@@ -2,20 +2,14 @@
 
 namespace Webkul\Product\Repositories;
 
-use Exception;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use Webkul\Product\Models\Product;
-use Illuminate\Pagination\Paginator;
-use Webkul\Core\Eloquent\Repository;
-use Illuminate\Support\Facades\Event;
-use Webkul\Attribute\Models\Attribute;
-use Webkul\Product\Models\ProductFlat;
 use Illuminate\Container\Container as App;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Webkul\Product\Models\ProductAttributeValueProxy;
-use Webkul\Attribute\Repositories\AttributeRepository;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Core\Eloquent\Repository;
+use Webkul\Product\Repositories\ProductFlatRepository;
+use Webkul\Product\Models\ProductAttributeValue;
 
 class ProductRepository extends Repository
 {
@@ -29,9 +23,8 @@ class ProductRepository extends Repository
     /**
      * Create a new repository instance.
      *
-     * @param \Webkul\Attribute\Repositories\AttributeRepository $attributeRepository
-     * @param \Illuminate\Container\Container                    $app
-     *
+     * @param  \Webkul\Attribute\Repositories\AttributeRepository  $attributeRepository
+     * @param  \Illuminate\Container\Container  $app
      * @return void
      */
     public function __construct(
@@ -55,8 +48,7 @@ class ProductRepository extends Repository
     }
 
     /**
-     * @param array $data
-     *
+     * @param  array  $data
      * @return \Webkul\Product\Contracts\Product
      */
     public function create(array $data)
@@ -73,10 +65,9 @@ class ProductRepository extends Repository
     }
 
     /**
-     * @param array  $data
-     * @param int    $id
-     * @param string $attribute
-     *
+     * @param  array  $data
+     * @param  int  $id
+     * @param  string  $attribute
      * @return \Webkul\Product\Contracts\Product
      */
     public function update(array $data, $id, $attribute = "id")
@@ -97,8 +88,7 @@ class ProductRepository extends Repository
     }
 
     /**
-     * @param int $id
-     *
+     * @param  int  $id
      * @return void
      */
     public function delete($id)
@@ -111,37 +101,25 @@ class ProductRepository extends Repository
     }
 
     /**
-     * @param int $categoryId
-     *
+     * @param  int  $categoryId
      * @return \Illuminate\Support\Collection
      */
     public function getAll($categoryId = null)
     {
         $params = request()->input();
 
-        if (core()->getConfigData('catalog.products.storefront.products_per_page')) {
-            $pages = explode(',', core()->getConfigData('catalog.products.storefront.products_per_page'));
-
-            $perPage = isset($params['limit']) ? (! empty($params['limit']) ? $params['limit'] : 9) : current($pages);
-        } else {
-            $perPage = isset($params['limit']) && ! empty($params['limit']) ? $params['limit'] : 9;
-        }
-
-        $page = Paginator::resolveCurrentPage('page');
-
-        $repository = app(ProductFlatRepository::class)->scopeQuery(function ($query) use ($params, $categoryId) {
+        $results = app(ProductFlatRepository::class)->scopeQuery(function($query) use($params, $categoryId) {
             $channel = request()->get('channel') ?: (core()->getCurrentChannelCode() ?: core()->getDefaultChannelCode());
 
             $locale = request()->get('locale') ?: app()->getLocale();
 
             $qb = $query->distinct()
-                ->select('product_flat.*')
-                ->join('product_flat as variants', 'product_flat.id', '=', DB::raw('COALESCE(' . DB::getTablePrefix() . 'variants.parent_id, ' . DB::getTablePrefix() . 'variants.id)'))
-                ->leftJoin('product_categories', 'product_categories.product_id', '=', 'product_flat.product_id')
-                ->leftJoin('product_attribute_values', 'product_attribute_values.product_id', '=', 'variants.product_id')
-                ->where('product_flat.channel', $channel)
-                ->where('product_flat.locale', $locale)
-                ->whereNotNull('product_flat.url_key');
+                        ->addSelect('product_flat.*')
+                        ->leftJoin('products', 'product_flat.product_id', '=', 'products.id')
+                        ->leftJoin('product_categories', 'products.id', '=', 'product_categories.product_id')
+                        ->where('product_flat.channel', $channel)
+                        ->where('product_flat.locale', $locale)
+                        ->whereNotNull('product_flat.url_key');
 
             if ($categoryId) {
                 $qb->where('product_categories.category_id', $categoryId);
@@ -155,116 +133,75 @@ class ProductRepository extends Repository
                 $qb->where('product_flat.visible_individually', 1);
             }
 
-            if (isset($params['search'])) {
+            $queryBuilder = $qb->leftJoin('product_flat as flat_variants', function($qb) use($channel, $locale) {
+                $qb->on('product_flat.id', '=', 'flat_variants.parent_id')
+                    ->where('flat_variants.channel', $channel)
+                    ->where('flat_variants.locale', $locale);
+            });
+
+            if (isset($params['search']))
                 $qb->where('product_flat.name', 'like', '%' . urldecode($params['search']) . '%');
-            }
-
-            /* added for api as per the documentation */
-            if (isset($params['name'])) {
-                $qb->where('product_flat.name', 'like', '%' . urldecode($params['name']) . '%');
-            }
-
-            /* added for api as per the documentation */
-            if (isset($params['url_key'])) {
-                $qb->where('product_flat.url_key', 'like', '%' . urldecode($params['url_key']) . '%');
-            }
-
-            # sort direction
-            $orderDirection = 'asc';
-            if (isset($params['order']) && in_array($params['order'], ['desc', 'asc'])) {
-                $orderDirection = $params['order'];
-            } else {
-                $sortOptions = $this->getDefaultSortByOption();
-                $orderDirection = ! empty($sortOptions) ? $sortOptions[1] : 'asc';
-            }
 
             if (isset($params['sort'])) {
-                $this->checkSortAttributeAndGenerateQuery($qb, $params['sort'], $orderDirection);
-            } else {
-                $sortOptions = $this->getDefaultSortByOption();
-                if (! empty($sortOptions)) {
-                    $this->checkSortAttributeAndGenerateQuery($qb, $sortOptions[0], $orderDirection);
+                $attribute = $this->attributeRepository->findOneByField('code', $params['sort']);
+
+                if ($attribute) {
+                    if ($params['sort'] == 'price') {
+                        if ($attribute->code == 'price') {
+                            $qb->orderBy('min_price', $params['order']);
+                        } else {
+                            $qb->orderBy($attribute->code, $params['order']);
+                        }
+                    } else {
+                        $qb->orderBy($params['sort'] == 'created_at' ? 'product_flat.created_at' : $attribute->code, $params['order']);
+                    }
                 }
             }
 
-            if ($priceFilter = request('price')) {
-                $priceRange = explode(',', $priceFilter);
-                if (count($priceRange) > 0) {
-                    $qb->where('variants.min_price', '>=', core()->convertToBasePrice($priceRange[0]));
-                    $qb->where('variants.min_price', '<=', core()->convertToBasePrice(end($priceRange)));
-                }
-            }
+            $qb = $qb->leftJoin('products as variants', 'products.id', '=', 'variants.parent_id');
 
-            $attributeFilters = $this->attributeRepository
-                ->getProductDefaultAttributes(array_keys(
-                    request()->except(['price'])
-                ));
+            $qb = $qb->where(function($query1) use($qb) {
+                $aliases = [
+                    'products' => 'filter_',
+                    'variants' => 'variant_filter_',
+                ];
 
-            if (count($attributeFilters) > 0) {
-                $qb->where(function ($filterQuery) use ($attributeFilters) {
+                foreach($aliases as $table => $alias) {
+                    $query1 = $query1->orWhere(function($query2) use ($qb, $table, $alias) {
 
-                    foreach ($attributeFilters as $attribute) {
-                        $filterQuery->orWhere(function ($attributeQuery) use ($attribute) {
+                        foreach ($this->attributeRepository->getProductDefaultAttributes(array_keys(request()->input())) as $code => $attribute) {
+                            $aliasTemp = $alias . $attribute->code;
 
-                            $column = DB::getTablePrefix() . 'product_attribute_values.' . ProductAttributeValueProxy::modelClass()::$attributeTypeFields[$attribute->type];
+                            $qb = $qb->leftJoin('product_attribute_values as ' . $aliasTemp, $table . '.id', '=', $aliasTemp . '.product_id');
 
-                            $filterInputValues = explode(',', request()->get($attribute->code));
+                            $column = ProductAttributeValue::$attributeTypeFields[$attribute->type];
 
-                            # define the attribute we are filtering
-                            $attributeQuery = $attributeQuery->where('product_attribute_values.attribute_id', $attribute->id);
+                            $temp = explode(',', request()->get($attribute->code));
 
-                            # apply the filter values to the correct column for this type of attribute.
                             if ($attribute->type != 'price') {
+                                $query2 = $query2->where($aliasTemp . '.attribute_id', $attribute->id);
 
-                                $attributeQuery->where(function ($attributeValueQuery) use ($column, $filterInputValues) {
-                                    foreach ($filterInputValues as $filterValue) {
+                                $query2 = $query2->where(function($query3) use($aliasTemp, $column, $temp) {
+                                    foreach($temp as $code => $filterValue) {
                                         if (! is_numeric($filterValue)) {
                                             continue;
                                         }
-                                        $attributeValueQuery->orWhereRaw("find_in_set(?, {$column})", [$filterValue]);
+
+                                        $columns = $aliasTemp . '.' . $column;
+                                        $query3 = $query3->orwhereRaw("find_in_set($filterValue, $columns)");
                                     }
                                 });
-
                             } else {
-                                $attributeQuery->where($column, '>=', core()->convertToBasePrice(current($filterInputValues)))
-                                    ->where($column, '<=', core()->convertToBasePrice(end($filterInputValues)));
+                                $query2->where('product_flat.min_price', '>=', core()->convertToBasePrice(current($temp)))
+                                        ->where('product_flat.min_price', '<=', core()->convertToBasePrice(end($temp)));
                             }
-                        });
-                    }
-
-                });
-
-                # this is key! if a product has been filtered down to the same number of attributes that we filtered on,
-                # we know that it has matched all of the requested filters.
-                $qb->groupBy('variants.id');
-                $qb->havingRaw('COUNT(*) = ' . count($attributeFilters));
-            }
-
-            return $qb->groupBy('product_flat.id');
-
-        });
-
-        # apply scope query so we can fetch the raw sql and perform a count
-        $repository->applyScope();
-        $countQuery = "select count(*) as aggregate from ({$repository->model->toSql()}) c";
-        $count = collect(DB::select($countQuery, $repository->model->getBindings()))->pluck('aggregate')->first();
-
-        if ($count > 0) {
-            # apply a new scope query to limit results to one page
-            $repository->scopeQuery(function ($query) use ($page, $perPage) {
-                return $query->forPage($page, $perPage);
+                        }
+                    });
+                }
             });
 
-            # manually build the paginator
-            $items = $repository->get();
-        } else {
-            $items = [];
-        }
-
-        $results = new LengthAwarePaginator($items, $count, $perPage, $page, [
-            'path'  => request()->url(),
-            'query' => request()->query(),
-        ]);
+            return $qb->groupBy('product_flat.id');
+        })->paginate(isset($params['limit']) ? $params['limit'] : 9);
 
         return $results;
     }
@@ -272,9 +209,8 @@ class ProductRepository extends Repository
     /**
      * Retrive product from slug
      *
-     * @param string $slug
-     * @param string $columns
-     *
+     * @param  string  $slug
+     * @param  string  $columns
      * @return \Webkul\Product\Contracts\Product
      */
     public function findBySlugOrFail($slug, $columns = null)
@@ -297,8 +233,7 @@ class ProductRepository extends Repository
     /**
      * Retrieve product from slug without throwing an exception (might return null)
      *
-     * @param string $slug
-     *
+     * @param  string  $slug
      * @return \Webkul\Product\Contracts\ProductFlat
      */
     public function findBySlug($slug)
@@ -317,19 +252,19 @@ class ProductRepository extends Repository
      */
     public function getNewProducts()
     {
-        $results = app(ProductFlatRepository::class)->scopeQuery(function ($query) {
+        $results = app(ProductFlatRepository::class)->scopeQuery(function($query) {
             $channel = request()->get('channel') ?: (core()->getCurrentChannelCode() ?: core()->getDefaultChannelCode());
 
             $locale = request()->get('locale') ?: app()->getLocale();
 
             return $query->distinct()
-                ->addSelect('product_flat.*')
-                ->where('product_flat.status', 1)
-                ->where('product_flat.visible_individually', 1)
-                ->where('product_flat.new', 1)
-                ->where('product_flat.channel', $channel)
-                ->where('product_flat.locale', $locale)
-                ->inRandomOrder();
+                            ->addSelect('product_flat.*')
+                            ->where('product_flat.status', 1)
+                            ->where('product_flat.visible_individually', 1)
+                            ->where('product_flat.new', 1)
+                            ->where('product_flat.channel', $channel)
+                            ->where('product_flat.locale', $locale)
+                            ->orderBy('product_id', 'desc');
         })->paginate(4);
 
         return $results;
@@ -342,19 +277,19 @@ class ProductRepository extends Repository
      */
     public function getFeaturedProducts()
     {
-        $results = app(ProductFlatRepository::class)->scopeQuery(function ($query) {
+        $results = app(ProductFlatRepository::class)->scopeQuery(function($query) {
             $channel = request()->get('channel') ?: (core()->getCurrentChannelCode() ?: core()->getDefaultChannelCode());
 
             $locale = request()->get('locale') ?: app()->getLocale();
 
             return $query->distinct()
-                ->addSelect('product_flat.*')
-                ->where('product_flat.status', 1)
-                ->where('product_flat.visible_individually', 1)
-                ->where('product_flat.featured', 1)
-                ->where('product_flat.channel', $channel)
-                ->where('product_flat.locale', $locale)
-                ->inRandomOrder();
+                            ->addSelect('product_flat.*')
+                            ->where('product_flat.status', 1)
+                            ->where('product_flat.visible_individually', 1)
+                            ->where('product_flat.featured', 1)
+                            ->where('product_flat.channel', $channel)
+                            ->where('product_flat.locale', $locale)
+                            ->orderBy('product_id', 'desc');
         })->paginate(4);
 
         return $results;
@@ -363,67 +298,29 @@ class ProductRepository extends Repository
     /**
      * Search Product by Attribute
      *
-     * @param string $term
-     *
+     * @param  string  $term
      * @return \Illuminate\Support\Collection
      */
     public function searchProductByAttribute($term)
     {
-        $channel = request()->get('channel') ?: (core()->getCurrentChannelCode() ?: core()->getDefaultChannelCode());
+        $results = app(ProductFlatRepository::class)->scopeQuery(function($query) use($term) {
+            $channel = request()->get('channel') ?: (core()->getCurrentChannelCode() ?: core()->getDefaultChannelCode());
 
-        $locale = request()->get('locale') ?: app()->getLocale();
+            $locale = request()->get('locale') ?: app()->getLocale();
 
-        if (config('scout.driver') == 'algolia') {
-            $results = app(ProductFlatRepository::class)->getModel()::search('query', function ($searchDriver, string $query, array $options) use ($term, $channel, $locale) {
-                $queries = explode('_', $term);
-
-                $options['similarQuery'] = array_map('trim', $queries);
-
-                $searchDriver->setSettings([
-                    'attributesForFaceting' => [
-                        "searchable(locale)",
-                        "searchable(channel)",
-                    ],
-                ]);
-
-                $options['facetFilters'] = ['locale:' . $locale, 'channel:' . $channel];
-
-                return $searchDriver->search($query, $options);
-            })
-                ->where('status', 1)
-                ->where('visible_individually', 1)
-                ->orderBy('product_id', 'desc')
-                ->paginate(16);
-        } else if (config('scout.driver') == 'elastic') {
-            $queries = explode('_', $term);
-
-            $results = app(ProductFlatRepository::class)->getModel()::search(implode(' OR ', $queries))
-                ->where('status', 1)
-                ->where('visible_individually', 1)
-                ->where('channel', $channel)
-                ->where('locale', $locale)
-                ->orderBy('product_id', 'desc')
-                ->paginate(16);
-        } else {
-            $results = app(ProductFlatRepository::class)->scopeQuery(function ($query) use ($term, $channel, $locale) {
-                return $query->distinct()
-                    ->addSelect('product_flat.*')
-                    ->where('product_flat.status', 1)
-                    ->where('product_flat.visible_individually', 1)
-                    ->where('product_flat.channel', $channel)
-                    ->where('product_flat.locale', $locale)
-                    ->whereNotNull('product_flat.url_key')
-                    ->where(function ($subQuery) use ($term) {
-                        $queries = explode('_', $term);
-
-                        foreach (array_map('trim', $queries) as $value) {
-                            $subQuery->orWhere('product_flat.name', 'like', '%' . urldecode($value) . '%')
-                                ->orWhere('product_flat.short_description', 'like', '%' . urldecode($value) . '%');
-                        }
-                    })
-                    ->orderBy('product_id', 'desc');
-            })->paginate(16);
-        }
+            return $query->distinct()
+                            ->addSelect('product_flat.*')
+                            ->where('product_flat.status', 1)
+                            ->where('product_flat.visible_individually', 1)
+                            ->where('product_flat.channel', $channel)
+                            ->where('product_flat.locale', $locale)
+                            ->whereNotNull('product_flat.url_key')
+                            ->where(function($sub_query) use ($term) {  
+                                $sub_query->where('product_flat.name', 'like', '%' . urldecode($term) . '%')
+                                          ->orWhere('product_flat.short_description', 'like', '%' . urldecode($term) . '%');
+                                })
+                            ->orderBy('product_id', 'desc');
+        })->paginate(16);
 
         return $results;
     }
@@ -431,8 +328,7 @@ class ProductRepository extends Repository
     /**
      * Returns product's super attribute with options
      *
-     * @param \Webkul\Product\Contracts\Product $product
-     *
+     * @param  \Webkul\Product\Contracts\Product  $product
      * @return \Illuminate\Support\Collection
      */
     public function getSuperAttributes($product)
@@ -458,275 +354,25 @@ class ProductRepository extends Repository
     /**
      * Search simple products for grouped product association
      *
-     * @param string $term
-     *
+     * @param  string  $term
      * @return \Illuminate\Support\Collection
      */
     public function searchSimpleProducts($term)
     {
-        return app(ProductFlatRepository::class)->scopeQuery(function ($query) use ($term) {
+        return app(ProductFlatRepository::class)->scopeQuery(function($query) use($term) {
             $channel = request()->get('channel') ?: (core()->getCurrentChannelCode() ?: core()->getDefaultChannelCode());
 
             $locale = request()->get('locale') ?: app()->getLocale();
 
             return $query->distinct()
-                ->addSelect('product_flat.*')
-                ->addSelect('product_flat.product_id as id')
-                ->leftJoin('products', 'product_flat.product_id', '=', 'products.id')
-                ->where('products.type', 'simple')
-                ->where('product_flat.channel', $channel)
-                ->where('product_flat.locale', $locale)
-                ->where('product_flat.name', 'like', '%' . urldecode($term) . '%')
-                ->orderBy('product_id', 'desc');
+                         ->addSelect('product_flat.*')
+                         ->addSelect('product_flat.product_id as id')
+                         ->leftJoin('products', 'product_flat.product_id', '=', 'products.id')
+                         ->where('products.type', 'simple')
+                         ->where('product_flat.channel', $channel)
+                         ->where('product_flat.locale', $locale)
+                         ->where('product_flat.name', 'like', '%' . urldecode($term) . '%')
+                         ->orderBy('product_id', 'desc');
         })->get();
-    }
-
-    /**
-     * Copy a product. Is usually called by the copy() function of the ProductController.
-     *
-     * Always make the copy is inactive so the admin is able to configure it before setting it live.
-     *
-     * @param int $sourceProductId the id of the product that should be copied
-     */
-    public function copy(Product $originalProduct): Product
-    {
-        $this->fillOriginalProduct($originalProduct);
-
-        if (! $originalProduct->getTypeInstance()->canBeCopied()) {
-            throw new Exception(trans('admin::app.response.product-can-not-be-copied', ['type' => $originalProduct->type]));
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $copiedProduct = $this->persistCopiedProduct($originalProduct);
-
-            $this->persistAttributeValues($originalProduct, $copiedProduct);
-
-            $this->persistRelations($originalProduct, $copiedProduct);
-        } catch (Exception $e) {
-            DB::rollBack();
-
-            report($e);
-
-            throw $e;
-        }
-
-        DB::commit();
-
-        return $copiedProduct;
-    }
-
-    /**
-     * Get default sort by option
-     *
-     * @return array
-     */
-    private function getDefaultSortByOption()
-    {
-        $value = core()->getConfigData('catalog.products.storefront.sort_by');
-
-        $config = $value ? $value : 'name-desc';
-
-        return explode('-', $config);
-    }
-
-    /**
-     * Check sort attribute and generate query
-     *
-     * @param object $query
-     * @param string $sort
-     * @param string $direction
-     *
-     * @return object
-     */
-    private function checkSortAttributeAndGenerateQuery($query, $sort, $direction)
-    {
-        $attribute = $this->attributeRepository->findOneByField('code', $sort);
-
-        if ($attribute) {
-            if ($attribute->code === 'price') {
-                $query->orderBy('min_price', $direction);
-            } else {
-                $query->orderBy($sort === 'created_at' ? 'product_flat.created_at' : $attribute->code, $direction);
-            }
-        }
-
-        return $query;
-    }
-
-    private function fillOriginalProduct(Product &$sourceProduct): void
-    {
-        $sourceProduct
-            ->load('attribute_family')
-            ->load('categories')
-            ->load('customer_group_prices')
-            ->load('inventories')
-            ->load('inventory_sources');
-    }
-
-    /**
-     * @param $originalProduct
-     *
-     * @return mixed
-     */
-    private function persistCopiedProduct($originalProduct): Product
-    {
-        $copiedProduct = $originalProduct
-            ->replicate()
-            ->fill([
-                // the sku and url_key needs to be unique and should be entered again newly by the admin:
-                'sku' => 'temporary-sku-' . substr(md5(microtime()), 0, 6),
-            ]);
-
-        $copiedProduct->save();
-
-        return $copiedProduct;
-    }
-
-
-    /**
-     * Gather the ids of the necessary product attributes.
-     * Throw an Exception if one of these 'basic' attributes are missing for some reason.
-     */
-    private function gatherAttributeIds(): array
-    {
-        $ids = [];
-
-        foreach (['name', 'sku', 'status', 'url_key'] as $code) {
-            $ids[$code] = Attribute::query()->where(['code' => $code])->firstOrFail()->id;
-        }
-
-        return $ids;
-    }
-
-    private function persistAttributeValues(Product $originalProduct, Product $copiedProduct): void
-    {
-        $attributeIds = $this->gatherAttributeIds();
-
-        $newProductFlat = new ProductFlat();
-
-        // only obey copied locale and channel:
-        if (isset($originalProduct->product_flats[0])) {
-            $newProductFlat = $originalProduct->product_flats[0]->replicate();
-        }
-
-        $newProductFlat->product_id = $copiedProduct->id;
-
-        $attributesToSkip = config('products.skipAttributesOnCopy') ?? [];
-
-        $randomSuffix = substr(md5(microtime()), 0, 6);
-
-        foreach ($originalProduct->attribute_values as $oldValue) {
-            if (in_array($oldValue->attribute->code, $attributesToSkip)) {
-                continue;
-            }
-
-            $newValue = $oldValue->replicate();
-
-            // change name of copied product
-            if ($oldValue->attribute_id === $attributeIds['name']) {
-                $copyOf = trans('admin::app.copy-of');
-                $copiedName = sprintf('%s%s (%s)',
-                    Str::startsWith($originalProduct->name, $copyOf) ? '' : $copyOf,
-                    $originalProduct->name,
-                    $randomSuffix
-                );
-                $newValue->text_value = $copiedName;
-                $newProductFlat->name = $copiedName;
-            }
-
-            // change url_key of copied product
-            if ($oldValue->attribute_id === $attributeIds['url_key']) {
-                $copyOfSlug = trans('admin::app.copy-of-slug');
-                $copiedSlug = sprintf('%s%s-%s',
-                    Str::startsWith($originalProduct->url_key, $copyOfSlug) ? '' : $copyOfSlug,
-                    $originalProduct->url_key,
-                    $randomSuffix
-                );
-                $newValue->text_value = $copiedSlug;
-                $newProductFlat->url_key = $copiedSlug;
-            }
-
-            // change sku of copied product
-            if ($oldValue->attribute_id === $attributeIds['sku']) {
-                $newValue->text_value = $copiedProduct->sku;
-                $newProductFlat->sku = $copiedProduct->sku;
-            }
-
-            // force the copied product to be inactive so the admin can adjust it before release
-            if ($oldValue->attribute_id === $attributeIds['status']) {
-                $newValue->boolean_value = 0;
-                $newProductFlat->status = 0;
-            }
-
-            $copiedProduct->attribute_values()->save($newValue);
-
-        }
-
-        $newProductFlat->save();
-    }
-
-    /**
-     * @param $originalProduct
-     * @param $copiedProduct
-     */
-    private function persistRelations($originalProduct, $copiedProduct): void
-    {
-        $attributesToSkip = config('products.skipAttributesOnCopy') ?? [];
-
-        if (! in_array('categories', $attributesToSkip)) {
-            foreach ($originalProduct->categories as $category) {
-                DB::table('product_categories')->insert([
-                    'product_id'  => $copiedProduct->id,
-                    'category_id' => $category->id,
-                ]);
-            }
-        }
-
-        if (! in_array('inventories', $attributesToSkip)) {
-            foreach ($originalProduct->inventories as $inventory) {
-                $copiedProduct->inventories()->save($inventory->replicate());
-            }
-        }
-
-        if (! in_array('customer_group_pricces', $attributesToSkip)) {
-            foreach ($originalProduct->customer_group_prices as $customer_group_price) {
-                $copiedProduct->customer_group_prices()->save($customer_group_price->replicate());
-            }
-        }
-
-        if (! in_array('images', $attributesToSkip)) {
-            foreach ($originalProduct->images as $image) {
-                $copiedProduct->images()->save($image->replicate());
-            }
-        }
-
-        if (! in_array('super_attributes', $attributesToSkip)) {
-            foreach ($originalProduct->super_attributes as $super_attribute) {
-                $copiedProduct->super_attributes()->save($super_attribute);
-            }
-        }
-
-        if (! in_array('bundle_options', $attributesToSkip)) {
-            foreach ($originalProduct->bundle_options as $bundle_option) {
-                $copiedProduct->bundle_options()->save($bundle_option->replicate());
-            }
-        }
-
-        if (! in_array('variants', $attributesToSkip)) {
-            foreach ($originalProduct->variants as $variant) {
-                $variant = $this->copy($variant);
-                $variant->parent_id = $copiedProduct->id;
-                $variant->save();
-            }
-        }
-
-        if (config('products.linkProductsOnCopy')) {
-            DB::table('product_relations')->insert([
-                'parent_id' => $originalProduct->id,
-                'child_id'  => $copiedProduct->id,
-            ]);
-        }
     }
 }

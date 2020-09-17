@@ -31,13 +31,7 @@ class Category extends TranslatableModel implements CategoryContract
         'meta_keywords',
     ];
 
-    protected $fillable = [
-        'position',
-        'status',
-        'display_mode',
-        'parent_id',
-        'additional',
-    ];
+    protected $fillable = ['position', 'status', 'display_mode', 'parent_id'];
 
     protected $with = ['translations'];
 

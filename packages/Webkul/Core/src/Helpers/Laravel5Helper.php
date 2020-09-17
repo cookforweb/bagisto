@@ -7,20 +7,17 @@ namespace Webkul\Core\Helpers;
 
 use Faker\Factory;
 use Codeception\Module\Laravel5;
-use Webkul\Attribute\Models\Attribute;
-use Webkul\Attribute\Models\AttributeOption;
-use Webkul\BookingProduct\Models\BookingProduct;
-use Webkul\BookingProduct\Models\BookingProductEventTicket;
 use Webkul\Checkout\Models\Cart;
-use Webkul\Checkout\Models\CartAddress;
 use Webkul\Checkout\Models\CartItem;
-use Webkul\Customer\Models\Customer;
-use Webkul\Customer\Models\CustomerAddress;
 use Webkul\Product\Models\Product;
+use Webkul\Attribute\Models\Attribute;
+use Webkul\Checkout\Models\CartAddress;
+use Webkul\Product\Models\ProductInventory;
+use Webkul\Customer\Models\CustomerAddress;
+use Webkul\Attribute\Models\AttributeOption;
 use Webkul\Product\Models\ProductAttributeValue;
 use Webkul\Product\Models\ProductDownloadableLink;
 use Webkul\Product\Models\ProductDownloadableLinkTranslation;
-use Webkul\Product\Models\ProductInventory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 
@@ -34,19 +31,21 @@ class Laravel5Helper extends Laravel5
     public const SIMPLE_PRODUCT = 1;
     public const VIRTUAL_PRODUCT = 2;
     public const DOWNLOADABLE_PRODUCT = 3;
-    public const BOOKING_EVENT_PRODUCT = 4;
 
     /**
      * Returns the field name of the given attribute in which a value should be saved inside
      * the 'product_attribute_values' table. Depends on the type.
      *
-     * @param string $type
+     * @param string $attribute
      *
      * @return string|null
      * @part ORM
      */
     public static function getAttributeFieldName(string $type): ?string
     {
+
+        $attributes = [];
+
         $possibleTypes = [
             'text'     => 'text_value',
             'select'   => 'integer_value',
@@ -61,7 +60,7 @@ class Laravel5Helper extends Laravel5
 
     public function prepareCart(array $options = []): array
     {
-        $faker = Factory::create();
+        $faker = \Faker\Factory::create();
 
         $I = $this;
 
@@ -109,7 +108,7 @@ class Laravel5Helper extends Laravel5
 
         $cartItems = [];
 
-        $generatedCartItems = random_int(3, 10);
+        $generatedCartItems = rand(3, 10);
 
         for ($i = 2; $i <= $generatedCartItems; $i++) {
             $quantity = random_int(1, 10);
@@ -179,10 +178,6 @@ class Laravel5Helper extends Laravel5
         $I = $this;
 
         switch ($productType) {
-            case self::BOOKING_EVENT_PRODUCT:
-                $product = $I->haveBookingEventProduct($configs, $productStates);
-                break;
-
             case self::DOWNLOADABLE_PRODUCT:
                 $product = $I->haveDownloadableProduct($configs, $productStates);
                 break;
@@ -210,9 +205,10 @@ class Laravel5Helper extends Laravel5
             $productStates = array_merge($productStates, ['simple']);
         }
 
+        /** @var Product $product */
         $product = $I->createProduct($configs['productAttributes'] ?? [], $productStates);
 
-        $I->createAttributeValues($product, $configs['attributeValues'] ?? []);
+        $I->createAttributeValues($product->id, $configs['attributeValues'] ?? []);
 
         $I->createInventory($product->id, $configs['productInventory'] ?? []);
 
@@ -226,9 +222,10 @@ class Laravel5Helper extends Laravel5
             $productStates = array_merge($productStates, ['virtual']);
         }
 
+        /** @var Product $product */
         $product = $I->createProduct($configs['productAttributes'] ?? [], $productStates);
 
-        $I->createAttributeValues($product, $configs['attributeValues'] ?? []);
+        $I->createAttributeValues($product->id, $configs['attributeValues'] ?? []);
 
         $I->createInventory($product->id, $configs['productInventory'] ?? []);
 
@@ -242,27 +239,12 @@ class Laravel5Helper extends Laravel5
             $productStates = array_merge($productStates, ['downloadable']);
         }
 
+        /** @var Product $product */
         $product = $I->createProduct($configs['productAttributes'] ?? [], $productStates);
 
-        $I->createAttributeValues($product, $configs['attributeValues'] ?? []);
+        $I->createAttributeValues($product->id, $configs['attributeValues'] ?? []);
 
         $I->createDownloadableLink($product->id);
-
-        return $product->refresh();
-    }
-
-    private function haveBookingEventProduct(array $configs = [], array $productStates = []): Product
-    {
-        $I = $this;
-        if (! in_array('booking', $productStates)) {
-            $productStates = array_merge($productStates, ['booking']);
-        }
-
-        $product = $I->createProduct($configs['productAttributes'] ?? [], $productStates);
-
-        $I->createAttributeValues($product, $configs['attributeValues'] ?? []);
-
-        $I->createBookingEventProduct($product->id);
 
         return $product->refresh();
     }
@@ -293,19 +275,7 @@ class Laravel5Helper extends Laravel5
         ]);
     }
 
-    private function createBookingEventProduct(int $productId): void
-    {
-        $I = $this;
-        $bookingProduct = $I->have(BookingProduct::class, [
-            'product_id' => $productId,
-        ]);
-
-        $I->have(BookingProductEventTicket::class, [
-            'booking_product_id' => $bookingProduct->id,
-        ]);
-    }
-
-    private function createAttributeValues(Product $product, array $attributeValues = []): void
+    private function createAttributeValues(int $productId, array $attributeValues = []): void
     {
         $I = $this;
 
@@ -313,7 +283,7 @@ class Laravel5Helper extends Laravel5
 
         $brand = Attribute::query()
             ->where(['code' => 'brand'])
-            ->firstOrFail(); // usually 25
+            ->first(); // usually 25
 
         if (! AttributeOption::query()
             ->where(['attribute_id' => $brand->id])
@@ -325,16 +295,16 @@ class Laravel5Helper extends Laravel5
 
         }
 
-        /**
+        /** @var array $defaultAttributeValues
          * Some defaults that should apply to all generated products.
          * By defaults products will be generated as saleable.
          * If you do not want this, this defaults can be overriden by $attributeValues.
          */
         $defaultAttributeValues = [
-            'name'                 => $faker->words(3, true),
+            'name'                 => $faker->word,
             'description'          => $faker->sentence,
             'short_description'    => $faker->sentence,
-            'sku'                  => $product->sku,
+            'sku'                  => $faker->word,
             'url_key'              => $faker->slug,
             'status'               => true,
             'guest_checkout'       => true,
@@ -342,9 +312,9 @@ class Laravel5Helper extends Laravel5
             'special_price_from'   => null,
             'special_price_to'     => null,
             'special_price'        => null,
-            'price'                => $faker->randomFloat(2, 1, 1000),
+            'price'                => $faker->randomFloat(4, 1, 1000),
             'weight'               => '1.00', // necessary for shipping
-            'brand'                => AttributeOption::query()->firstWhere('attribute_id', $brand->id)->id,
+            'brand'                => AttributeOption::firstWhere('attribute_id', $brand->id)->id,
         ];
 
         $attributeValues = array_merge($defaultAttributeValues, $attributeValues);
@@ -357,7 +327,7 @@ class Laravel5Helper extends Laravel5
 
         foreach ($possibleAttributeValues as $attributeSet) {
             $data = [
-                'product_id'   => $product->id,
+                'product_id'   => $productId,
                 'attribute_id' => $attributeSet->id,
             ];
 
@@ -365,78 +335,7 @@ class Laravel5Helper extends Laravel5
 
             $data[$fieldName] = $attributeValues[$attributeSet->code] ?? null;
 
-            $data = $this->appendAttributeDependencies($attributeSet->code, $data);
-
             $I->have(ProductAttributeValue::class, $data);
         }
     }
-
-    /**
-     * @param string $attributeCode
-     * @param array  $data
-     *
-     * @return array
-     */
-    private function appendAttributeDependencies(string $attributeCode, array $data): array
-    {
-        $locale = core()->getCurrentLocale()->code;
-        $channel = core()->getCurrentChannelCode();
-
-        $attributeSetDependencies = [
-            'name'               => [
-                'locale',
-                'channel',
-            ],
-            'tax_category_id' => [
-                'channel',
-            ],
-            'short_description'  => [
-                'locale',
-                'channel',
-            ],
-            'description'        => [
-                'locale',
-                'channel',
-            ],
-            'cost'               => [
-                'channel',
-            ],
-            'special_price_from' => [
-                'channel',
-            ],
-            'special_price_to'   => [
-                'channel',
-            ],
-            'meta_title'         => [
-                'locale',
-                'channel',
-            ],
-            'meta_keywords'      => [
-                'locale',
-                'channel',
-            ],
-            'meta_description'   => [
-                'locale',
-                'channel',
-            ],
-            'custom_sale_badge'  => [
-                'locale',
-            ],
-        ];
-
-        if (array_key_exists($attributeCode, $attributeSetDependencies)) {
-            foreach ($attributeSetDependencies[$attributeCode] as $key) {
-                if ($key === 'locale') {
-                    $data['locale'] = $locale;
-                }
-
-                if ($key === 'channel') {
-                    $data['channel'] = $channel;
-                }
-            }
-        }
-
-        return $data;
-    }
-
 }

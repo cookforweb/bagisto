@@ -56,10 +56,6 @@ class ResourceController extends Controller
     public function index()
     {
         $query = $this->repository->scopeQuery(function($query) {
-            if (isset($this->_config['authorization_required']) && $this->_config['authorization_required']) {
-                $query = $query->where('customer_id', auth()->user()->id );
-            } 
-            
             foreach (request()->except(['page', 'limit', 'pagination', 'sort', 'order', 'token']) as $input => $value) {
                 $query = $query->whereIn($input, array_map('trim', explode(',', $value)));
             }
@@ -89,12 +85,10 @@ class ResourceController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function get($id)
-    {    
-        $query = isset($this->_config['authorization_required']) && $this->_config['authorization_required'] ? 
-                $this->repository->where('customer_id', auth()->user()->id)->findOrFail($id) : 
-                $this->repository->findOrFail($id);
-        
-        return new $this->_config['resource']($query);
+    {
+        return new $this->_config['resource'](
+            $this->repository->findOrFail($id)
+        );
     }
 
     /**

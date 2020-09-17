@@ -4,6 +4,7 @@ namespace Tests\Functional\Checkout\Cart;
 
 use FunctionalTester;
 use Webkul\Core\Helpers\Laravel5Helper;
+use Cart;
 
 class CartCest
 {
@@ -11,7 +12,7 @@ class CartCest
     public $productWithQuantityBox;
     public $productWithoutQuantityBox;
 
-    public function _before(FunctionalTester $I): void
+    public function _before(FunctionalTester $I)
     {
         $productConfig = [
             'productAttributes' => [],
@@ -26,11 +27,9 @@ class CartCest
         $this->productWithoutQuantityBox = $I->haveProduct(Laravel5Helper::DOWNLOADABLE_PRODUCT, $productConfig);
     }
 
-    public function checkCartWithQuantityBox(FunctionalTester $I): void
+    public function checkCartWithQuantityBox(FunctionalTester $I)
     {
-        $I->useDefaultTheme();
-
-        cart()->addProduct($this->productWithQuantityBox->id, [
+        Cart::addProduct($this->productWithQuantityBox->id, [
             '_token'     => session('_token'),
             'product_id' => $this->productWithQuantityBox->id,
             'quantity'   => 1,
@@ -40,9 +39,9 @@ class CartCest
         $I->seeElement('#update_cart_button');
     }
 
-    public function checkCartWithoutQuantityBox(FunctionalTester $I): void
+    public function checkCartWithoutQuantityBox(FunctionalTester $I)
     {
-        cart()->addProduct($this->productWithoutQuantityBox->id, [
+        Cart::addProduct($this->productWithoutQuantityBox->id, [
             '_token'     => session('_token'),
             'product_id' => $this->productWithoutQuantityBox->id,
             'links'      => $this->productWithoutQuantityBox->downloadable_links->pluck('id')->all(),
