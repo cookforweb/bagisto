@@ -29,8 +29,8 @@ use Webkul\Core\Repositories\SliderRepository;
 
     /**
      * loads the home page for the storefront
-     * 
-     * @return \Illuminate\View\View 
+     *
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -49,7 +49,7 @@ use Webkul\Core\Repositories\SliderRepository;
 
     /**
      * loads the home page for the storefront
-     * 
+     *
      * @return \Exception
      */
     public function notFound()

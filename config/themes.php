@@ -17,9 +17,9 @@ return [
         //     'parent' => 'default'
         // ]
         'default' => [
-            'views_path' => 'resources/themes/testtheme/views',
-            'assets_path' => 'public/themes/testtheme/assets',
-            'name' => 'Test Theme',
+            'views_path' => 'resources/themes/storehub/views',
+            'assets_path' => 'public/themes/storehub/assets',
+            'name' => 'StoreHub theme',
 //            'parent' => 'default'
         ],
 
